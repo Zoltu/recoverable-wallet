@@ -5,3 +5,16 @@
 	border-radius: 5px;
 	padding: 1.5em;
 }
+
+.warning {
+	background: #f80;
+	bottom: 0;
+	color: #fff;
+	cursor: pointer;
+	left: 0;
+	opacity: 1;
+	padding: 1.5em;
+	position: fixed;
+	right: 50%;
+	z-index: 100;
+}

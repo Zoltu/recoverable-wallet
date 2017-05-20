@@ -4,9 +4,18 @@ import "./claimable.sol";
 import "./token.sol";
 
 contract RecoverableWallet is Claimable {
+	event RecoveryStarted(address indexed initiator, address indexed newOwner);
+
 	mapping(address => address) private _recoveryAddresses;
 	address private _activeRecoveryAddress;
 	uint256 private _activeRecoveryStartTime;
+	uint8 private _recoveryDelayDays;
+
+	function RecoverableWallet(uint8 recoveryDelayInDays) {
+		_recoveryDelayDays = recoveryDelayDays;
+	}
+
+	function () external payable { }
 
 	function addRecoveryAddress(address newRecoveryAddress) external onlyOwner {
 		_recoveryAddresses[newRecoveryAddress] = 1;
@@ -20,6 +29,7 @@ contract RecoverableWallet is Claimable {
 		require(_recoveryAddresses[msg.sender] == 1);
 		require(_activeRecoveryAddress == address(0));
 
+		RecoveryStarted(msg.sender, newOwnerAddress);
 		_activeRecoveryAddress = newOwnerAddress;
 		_activeRecoveryStartTime = block.timestamp;
 	}
@@ -31,7 +41,7 @@ contract RecoverableWallet is Claimable {
 
 	function finishRecovery() external {
 		require(_activeRecoveryAddress != address(0));
-		require(block.timestamp > _activeRecoveryStartTime + 3 days);
+		require(block.timestamp > _activeRecoveryStartTime + _recoveryDelayDays * 1 days);
 
 		_pendingOwner = _activeRecoveryAddress;
 		_activeRecoveryAddress = address(0);
@@ -44,14 +54,12 @@ contract RecoverableWallet is Claimable {
 
 	function sendToken(address tokenAddress, address destination, uint256 amount) external onlyOwner {
 		Token token = Token(tokenAddress);
-		bool success = token.transfer(destination, amount);
-		require(success);
+		require(token.transfer(destination, amount));
 	}
 
 	function approveToken(address tokenAddress, address spender, uint256 amount) external onlyOwner {
 		Token token = Token(tokenAddress);
-		bool success = token.approve(spender, amount);
-		require(success);
+		require(token.approve(spender, amount));
 	}
 
 	// TODO: allow calling arbitrary contracts by owner

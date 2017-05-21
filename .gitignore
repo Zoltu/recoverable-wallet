@@ -18,3 +18,6 @@ logs/
 database/
 .idea/workspace.xml
 .idea/misc.xml
+
+dapp/server/obj/
+dapp/server/bin/

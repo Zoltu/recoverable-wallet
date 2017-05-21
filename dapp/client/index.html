@@ -4,11 +4,14 @@
 		<meta charset="utf-8">
 		<title>Recoverable Wallet</title>
 		<link href="index.css" rel='stylesheet' type='text/css'>
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+		<link href="https://unpkg.com/ace-css/css/ace.min.css" rel="stylesheet">
 		<script src="/parity-utils/parity.js"></script>
 	</head>
 	<body>
 		<div id="container"></div>
-		<script src="index.js"></script>
+		<script src="app.js"></script>
+		<script>Elm.App.embed(document.getElementById('container'));</script>
 		<div class="warning">
 			<span>WARNING: This application is a work in progress!  Please don't use it yet, but check back later if it interests you.</span>
 		</div>

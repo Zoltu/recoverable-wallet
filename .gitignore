@@ -21,3 +21,6 @@ database/
 
 dapp/server/obj/
 dapp/server/bin/
+
+elm-stuff/
+dapp/client/app.js

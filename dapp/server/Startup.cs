@@ -26,6 +26,7 @@ namespace server
 				.UseContentRoot(clientDirectoryPath)
 				.UseWebRoot("")
 				.UseStartup<Startup>()
+				.UseUrls("http://*:80")
 				.Build()
 				.Run();
 		}

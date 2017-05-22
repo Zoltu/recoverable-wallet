@@ -1,6 +1,3 @@
-import org.ethereum.core.Account
-import org.ethereum.core.AccountState
-import org.ethereum.core.Repository
 import org.ethereum.crypto.ECKey
 import org.ethereum.solidity.compiler.CompilationResult
 import org.ethereum.solidity.compiler.SolidityCompiler
@@ -12,14 +9,19 @@ import java.math.BigInteger
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 
 class RecoverableWallet {
 	companion object {
-		val recoverableWalletContractMetadata by lazy {
+		val compiledContract by lazy {
 			val compilerResult = SolidityCompiler.compile(File("contracts/recoverable-wallet.sol"), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE, SolidityCompiler.Options.METADATA)
 			assertFalse(compilerResult.isFailed, compilerResult.errors)
-			CompilationResult.parse(compilerResult.output).contracts.mapKeys { Regex("^.*:(.*)$").find(it.key)!!.groups[1]!!.value }["RecoverableWallet"]!!
+			CompilationResult.parse(compilerResult.output).contracts.mapKeys { Regex("^.*:(.*)$").find(it.key)!!.groups[1]!!.value }
+		}
+		val recoverableWalletFactoryContractMetadata by lazy {
+			compiledContract["RecoverableWalletFactory"]!!
+		}
+		val recoverableWalletContractMetadata by lazy {
+			compiledContract["RecoverableWallet"]!!
 		}
 		val tokenContractMetadata by lazy {
 			val compilerResult = SolidityCompiler.compile(File("contracts/token.sol"), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE, SolidityCompiler.Options.METADATA)
@@ -52,7 +54,9 @@ class RecoverableWallet {
 	@Test
 	fun `successful ownership transfer`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
+		val recoverableWalletFactory = blockchain.submitNewContract(recoverableWalletFactoryContractMetadata)
+		val recoverableWalletAddress = recoverableWalletFactory.callFunction("createWallet", 3).returnValue as ByteArray
+		val recoverableWallet = blockchain.createExistingContractFromABI(recoverableWalletContractMetadata.abi, recoverableWalletAddress)
 		val originalOwner = recoverableWallet.callConstFunction("getOwner")[0] as ByteArray
 		val originalPendingOwner = recoverableWallet.callConstFunction("getPendingOwner")[0] as ByteArray
 		recoverableWallet.callFunction("transferOwnership", bobAddress)
@@ -74,7 +78,7 @@ class RecoverableWallet {
 	@Test
 	fun `only owner can transfer ownership`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
+		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata, 3, aliceAddress)
 		blockchain.sender = bob
 		val result = recoverableWallet.callFunction("transferOwnership", bobAddress)
 		assertFalse(result.isSuccessful)
@@ -83,7 +87,7 @@ class RecoverableWallet {
 	@Test
 	fun `only claimant can claim ownership`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
+		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata, 3, aliceAddress)
 		recoverableWallet.callFunction("transferOwnership", bobAddress)
 		val result = recoverableWallet.callFunction("claimOwnership")
 		assertFalse(result.isSuccessful)
@@ -92,7 +96,7 @@ class RecoverableWallet {
 	@Test
 	fun `cannot set owner to 0`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
+		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata, 3, aliceAddress)
 		val result = recoverableWallet.callFunction("transferOwnership", ByteArray(20, { 0 }))
 		assertFalse(result.isSuccessful)
 	}
@@ -100,7 +104,7 @@ class RecoverableWallet {
 	@Test
 	fun `can send ether`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
+		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata, 3, aliceAddress)
 		val originalContractBalance = blockchain.blockchain.repository.getBalance(recoverableWallet.address)
 		val originalCarolBalance = blockchain.blockchain.repository.getBalance(carol.address)
 		blockchain.sendEther(recoverableWallet.address, BigInteger.ONE)
@@ -119,8 +123,8 @@ class RecoverableWallet {
 	@Test
 	fun `can send tokens`() {
 		blockchain.sender = alice
-		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata)
 		val token = blockchain.submitNewContract(tokenContractMetadata)
+		val recoverableWallet = blockchain.submitNewContract(recoverableWalletContractMetadata, 3, aliceAddress)
 		val originalContractBalance = token.callConstFunction("balanceOf", recoverableWallet.address)[0] as BigInteger
 		val originalCarolBalance = token.callConstFunction("balanceOf", carolAddress)[0] as BigInteger
 		token.callFunction("transfer", recoverableWallet.address, BigInteger.ONE)

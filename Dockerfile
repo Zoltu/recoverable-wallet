@@ -13,6 +13,7 @@ RUN dotnet build
 WORKDIR /app/client
 COPY elm-package.json /app/client/elm-package.json
 RUN sed -i 's|dapp/client|.|g' elm-package.json
+RUN elm-make --yes
 COPY dapp/client/index.html /app/client/index.html
 COPY dapp/client/ /app/client/
 RUN elm-make --yes /app/client/App.elm --output /app/client/app.js

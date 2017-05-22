@@ -11,7 +11,7 @@ contract RecoverableWalletFactory {
 	mapping(address => RecoverableWallet) private _wallets;
 
 	function createWallet(uint8 recoveryDelayInDays) external returns (RecoverableWallet) {
-		require(_wallets[msg.sender] == address(0) || _wallets[msg.sender].getOwner() == msg.sender);
+		require(_wallets[msg.sender] == address(0) || _wallets[msg.sender]._owner() == msg.sender);
 		RecoverableWallet newWallet = new RecoverableWallet(recoveryDelayInDays, msg.sender);
 		_wallets[msg.sender] = newWallet;
 		WalletCreated(msg.sender);
@@ -24,6 +24,8 @@ contract RecoverableWalletFactory {
 }
 
 contract Ownable {
+	event OwnerChanged(address indexed oldOwner, address indexed newOwner);
+
 	address public _owner;
 
 	function Ownable(address owner) {
@@ -35,18 +37,19 @@ contract Ownable {
 		_;
 	}
 
-	function getOwner() external constant returns (address) {
-		return _owner;
-	}
-
 	function transferOwnership(address newOwner) external onlyOwner {
 		require(newOwner != address(0));
+		address oldOwner = _owner;
 		_owner = newOwner;
+		OwnerChanged(oldOwner, _owner);
 	}
 }
 
 contract Claimable is Ownable {
-	address internal _pendingOwner;
+	event OwnershipTransferStarted(address indexed oldOwner, address indexed newOwner);
+	event OwnershipTransferFinished(address indexed oldOwner, address indexed newOwner);
+
+	address public _pendingOwner;
 
 	modifier onlyPendingOwner() {
 		require(msg.sender == _pendingOwner);
@@ -55,28 +58,29 @@ contract Claimable is Ownable {
 
 	function Claimable(address owner) Ownable(owner) {}
 
-	function getPendingOwner() external constant returns (address) {
-		return _pendingOwner;
-	}
-
 	function transferOwnership(address newOwner) external onlyOwner {
 		require(newOwner != address(0));
 		_pendingOwner = newOwner;
+		OwnershipTransferStarted(_owner, _pendingOwner);
 	}
 
 	function claimOwnership() external onlyPendingOwner {
+		address oldOwner = _owner;
 		_owner = _pendingOwner;
 		_pendingOwner = address(0);
+		OwnershipTransferFinished(oldOwner, _owner);
 	}
 }
 
 contract RecoverableWallet is Claimable {
-	event RecoveryStarted(address indexed initiator, address indexed newOwner);
+	event RecoveryStarted(address indexed newOwner);
+	event RecoveryCancelled();
+	event RecoveryFinished(address indexed newOwner);
 
-	mapping(address => address) private _recoveryAddresses;
-	address private _activeRecoveryAddress;
-	uint256 private _activeRecoveryStartTime;
-	uint8 private _recoveryDelayDays;
+	mapping(address => address) public _recoveryAddresses;
+	address public _activeRecoveryAddress;
+	uint256 public _activeRecoveryStartTime;
+	uint8 public _recoveryDelayDays;
 
 	function RecoverableWallet(uint8 recoveryDelayInDays, address owner) Claimable(owner) {
 		require(owner != address(0));
@@ -97,14 +101,15 @@ contract RecoverableWallet is Claimable {
 		require(_recoveryAddresses[msg.sender] == 1);
 		require(_activeRecoveryAddress == address(0));
 
-		RecoveryStarted(msg.sender, newOwnerAddress);
 		_activeRecoveryAddress = newOwnerAddress;
 		_activeRecoveryStartTime = block.timestamp;
+		RecoveryStarted(newOwnerAddress);
 	}
 
 	function cancelRecovery() external onlyOwner {
 		_activeRecoveryAddress = address(0);
 		_activeRecoveryStartTime = 0;
+		RecoveryCancelled();
 	}
 
 	function finishRecovery() external {
@@ -114,6 +119,7 @@ contract RecoverableWallet is Claimable {
 		_pendingOwner = _activeRecoveryAddress;
 		_activeRecoveryAddress = address(0);
 		_activeRecoveryStartTime = 0;
+		RecoveryFinished(_pendingOwner);
 	}
 
 	function sendEther(address destination, uint256 amount) external onlyOwner {

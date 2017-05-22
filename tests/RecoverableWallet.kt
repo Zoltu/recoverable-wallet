@@ -57,15 +57,15 @@ class RecoverableWallet {
 		val recoverableWalletFactory = blockchain.submitNewContract(recoverableWalletFactoryContractMetadata)
 		val recoverableWalletAddress = recoverableWalletFactory.callFunction("createWallet", 3).returnValue as ByteArray
 		val recoverableWallet = blockchain.createExistingContractFromABI(recoverableWalletContractMetadata.abi, recoverableWalletAddress)
-		val originalOwner = recoverableWallet.callConstFunction("getOwner")[0] as ByteArray
-		val originalPendingOwner = recoverableWallet.callConstFunction("getPendingOwner")[0] as ByteArray
+		val originalOwner = recoverableWallet.callConstFunction("_owner")[0] as ByteArray
+		val originalPendingOwner = recoverableWallet.callConstFunction("_pendingOwner")[0] as ByteArray
 		recoverableWallet.callFunction("transferOwnership", bobAddress)
-		val postTransferOwner = recoverableWallet.callConstFunction("getOwner")[0] as ByteArray
-		val postTransferPendingOwner = recoverableWallet.callConstFunction("getPendingOwner")[0] as ByteArray
+		val postTransferOwner = recoverableWallet.callConstFunction("_owner")[0] as ByteArray
+		val postTransferPendingOwner = recoverableWallet.callConstFunction("_pendingOwner")[0] as ByteArray
 		blockchain.sender = bob
 		recoverableWallet.callFunction("claimOwnership")
-		val finalOwner = recoverableWallet.callConstFunction("getOwner")[0] as ByteArray
-		val finalPendingOwner = recoverableWallet.callConstFunction("getPendingOwner")[0] as ByteArray
+		val finalOwner = recoverableWallet.callConstFunction("_owner")[0] as ByteArray
+		val finalPendingOwner = recoverableWallet.callConstFunction("_pendingOwner")[0] as ByteArray
 
 		assertByteArraysEqual(expected = alice.address, actual = originalOwner)
 		assertByteArraysEqual(expected = ByteArray(20, { 0 }), actual = originalPendingOwner)

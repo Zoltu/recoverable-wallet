@@ -73,11 +73,13 @@ contract Claimable is Ownable {
 }
 
 contract RecoverableWallet is Claimable {
+	event RecoveryAddressAdded(address indexed newRecoverer);
+	event RecoveryAddressRemoved(address indexed oldRecoverer);
 	event RecoveryStarted(address indexed newOwner);
 	event RecoveryCancelled();
 	event RecoveryFinished(address indexed newOwner);
 
-	mapping(address => address) public _recoveryAddresses;
+	mapping(address => bool) public _recoveryAddresses;
 	address public _activeRecoveryAddress;
 	uint256 public _activeRecoveryStartTime;
 	uint8 public _recoveryDelayDays;
@@ -90,15 +92,17 @@ contract RecoverableWallet is Claimable {
 	function () external payable { }
 
 	function addRecoveryAddress(address newRecoveryAddress) external onlyOwner {
-		_recoveryAddresses[newRecoveryAddress] = 1;
+		_recoveryAddresses[newRecoveryAddress] = true;
+		RecoveryAddressAdded(newRecoveryAddress);
 	}
 
 	function removeRecoveryAddress(address oldRecoveryAddress) external onlyOwner {
-		_recoveryAddresses[oldRecoveryAddress] = 0;
+		_recoveryAddresses[oldRecoveryAddress] = false;
+		RecoveryAddressRemoved(oldRecoveryAddress);
 	}
 
 	function startRecovery(address newOwnerAddress) external {
-		require(_recoveryAddresses[msg.sender] == 1);
+		require(_recoveryAddresses[msg.sender]);
 		require(_activeRecoveryAddress == address(0));
 
 		_activeRecoveryAddress = newOwnerAddress;

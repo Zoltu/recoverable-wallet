@@ -25,6 +25,10 @@
 
 			app.ports.createWallet.subscribe((address, gas, recoveryDelayInDays) => factory.instance.createWallet.postTransaction({ gas: gas }, [recoveryDelayInDays]));
 			app.ports.sendEth.subscribe((walletAddress, amount, recipientAddress) => window.parity.api.newContract(walletAbi).at(walletAddress).instance.sendEth.postTransaction({gas:gas}, [recipientAddress, amount]));
+			// TODO: getTokens port
+			// TODO: sendToken port
+			// TODO: add recoverer port
+			// TODO: remove recoverer port
 		</script>
 		<div class="warning">
 			<span>WARNING: This application is a work in progress!  Please don't use it yet, but check back later if it interests you.</span>

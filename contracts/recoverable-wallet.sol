@@ -12,7 +12,7 @@ contract RecoverableWalletFactory {
 
 	function createWallet(uint8 recoveryDelayInDays) external returns (RecoverableWallet) {
 		require(_wallets[msg.sender] == address(0) || _wallets[msg.sender]._owner() == msg.sender);
-		RecoverableWallet newWallet = new RecoverableWallet(recoveryDelayInDays, msg.sender);
+		RecoverableWallet newWallet = new RecoverableWallet(msg.sender);
 		_wallets[msg.sender] = newWallet;
 		WalletCreated(msg.sender);
 		return newWallet;
@@ -73,56 +73,54 @@ contract Claimable is Ownable {
 }
 
 contract RecoverableWallet is Claimable {
-	event RecoveryAddressAdded(address indexed newRecoverer);
+	event RecoveryAddressAdded(address indexed newRecoverer, uint256 recoveryDelayInDays);
 	event RecoveryAddressRemoved(address indexed oldRecoverer);
 	event RecoveryStarted(address indexed newOwner);
 	event RecoveryCancelled();
-	event RecoveryFinished(address indexed newOwner);
+	event RecoveryFinished(address indexed newPendingOwner);
 
-	mapping(address => bool) public _recoveryAddresses;
+	mapping(address => uint8) public _recoveryAddresses;
 	address public _activeRecoveryAddress;
-	uint256 public _activeRecoveryStartTime;
-	uint8 public _recoveryDelayDays;
+	uint256 public _activeRecoveryEndTime;
 
-	function RecoverableWallet(uint8 recoveryDelayInDays, address owner) Claimable(owner) {
+	function RecoverableWallet(address owner) Claimable(owner) {
 		require(owner != address(0));
-		_recoveryDelayDays = recoveryDelayInDays;
 	}
 
 	function () external payable { }
 
-	function addRecoveryAddress(address newRecoveryAddress) external onlyOwner {
-		_recoveryAddresses[newRecoveryAddress] = true;
-		RecoveryAddressAdded(newRecoveryAddress);
+	function addRecoveryAddress(address newRecoveryAddress, uint8 recoveryDelayInDays) external onlyOwner {
+		_recoveryAddresses[newRecoveryAddress] = recoveryDelayInDays;
+		RecoveryAddressAdded(newRecoveryAddress, recoveryDelayInDays);
 	}
 
 	function removeRecoveryAddress(address oldRecoveryAddress) external onlyOwner {
-		_recoveryAddresses[oldRecoveryAddress] = false;
+		_recoveryAddresses[oldRecoveryAddress] = 0;
 		RecoveryAddressRemoved(oldRecoveryAddress);
 	}
 
 	function startRecovery(address newOwnerAddress) external {
-		require(_recoveryAddresses[msg.sender]);
-		require(_activeRecoveryAddress == address(0));
+		require(_recoveryAddresses[msg.sender] != 0);
+		require(_activeRecoveryAddress == address(0) || _recoveryAddresses[msg.sender] < _recoveryAddresses[_activeRecoveryAddress]);
 
 		_activeRecoveryAddress = newOwnerAddress;
-		_activeRecoveryStartTime = block.timestamp;
+		_activeRecoveryEndTime = block.timestamp + _recoveryAddresses[msg.sender] * 1 days;
 		RecoveryStarted(newOwnerAddress);
 	}
 
 	function cancelRecovery() external onlyOwner {
 		_activeRecoveryAddress = address(0);
-		_activeRecoveryStartTime = 0;
+		_activeRecoveryEndTime = 0;
 		RecoveryCancelled();
 	}
 
 	function finishRecovery() external {
 		require(_activeRecoveryAddress != address(0));
-		require(block.timestamp > _activeRecoveryStartTime + _recoveryDelayDays * 1 days);
+		require(block.timestamp > _activeRecoveryEndTime);
 
 		_pendingOwner = _activeRecoveryAddress;
 		_activeRecoveryAddress = address(0);
-		_activeRecoveryStartTime = 0;
+		_activeRecoveryEndTime = 0;
 		RecoveryFinished(_pendingOwner);
 	}
 

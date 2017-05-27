@@ -3,9 +3,7 @@ port module App exposing (..)
 import Html exposing (Html, button, div, text, program)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-
-
--- Types
+import Maybe exposing (withDefault)
 
 
 type alias Address =
@@ -17,7 +15,9 @@ type alias Amount =
 
 
 type alias Model =
-    { address : Maybe Address, eth : Amount }
+    { address : Maybe Address
+    , eth : Amount
+    }
 
 
 type Message
@@ -86,38 +86,29 @@ subscriptions model =
 -- VIEW
 
 
-renderModel : Model -> Html Message
-renderModel model =
+view : Model -> Html Message
+view model =
     div [ class "wallet" ]
         [ div [ class "address" ]
             [ div [ class "label" ] [ text "Address" ]
             , div []
                 [ button [ class "fa fa-refresh", onClick RefreshAddress ] []
-                , div [ class "value" ] [ text (maybeString model.address) ]
+                , div [ class "value" ] [ text <| showAddress model.address ]
                 ]
             ]
         ]
 
 
-maybeString : Maybe String -> String
-maybeString x =
-    case x of
-        Nothing ->
-            "No Address Available"
-
-        Just y ->
-            y
-
-
-
--- MAIN
+showAddress : Maybe Address -> String
+showAddress x =
+    withDefault "No Address Available" x
 
 
 main : Program Never Model Message
 main =
     program
         { init = ( { address = Nothing, eth = 0 }, requestAddress () )
-        , view = renderModel
+        , view = view
         , update = update
         , subscriptions = subscriptions
         }

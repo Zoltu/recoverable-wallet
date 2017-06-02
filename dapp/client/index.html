@@ -21,17 +21,19 @@
 				{name: "Augur Rep", shortName: "REP", decimals: 18, address: '0x48c80F1f4D53D5951e5D5438B54Cba84f29F32a5'},
 				{name: "MakerDAO", shortName: "MKR", decimals: 18, address: '0xC66eA802717bFb9833400264Dd12c2bCeAa34a6d'},
 			]));
-			app.ports.requestActiveRecoveryAddress.subscribe((walletAddress) => instantPromise().then(() => app.ports.activeRecoveryAddress.send('0xe853c56864a2ebe4576a807d26fdc4a0ada51919')));
-			app.ports.requestActiveRecoveryStartTime.subscribe((walletAddress) => instantPromise().then(() => app.ports.activeRecoveryStartTime.send(1495515488)));
-			app.ports.requestRecovererAddressList.subscribe((walletAddress) => instantPromise().then(() => ['0x90e63c3d53e0ea496845b7a03ec7548b70014a91', '0x53d284357ec70ce289d6d64134dfac8e511c8a3d']));
-			app.ports.requestRecoveryDelay.subscribe((walletAddress) => instantPromise().then(() => app.ports.recoveryDelayDays.send(7)));
+			app.ports.requestEthBalance.subscribe(walletAddress => instantPromise().then(() => app.ports.ethBalanceChanged.send(BigNumber('5e20'))));
+			app.ports.requestTokenBalance.subscribe((walletAddress, tokenAddress) => instantPromise().then(() => app.ports.tokenBalanceChanged.send(BigNumber('7e36'))))
+			app.ports.requestActiveRecoveryAddress.subscribe(walletAddress => instantPromise().then(() => app.ports.activeRecoveryAddress.send('0xe853c56864a2ebe4576a807d26fdc4a0ada51919')));
+			app.ports.requestActiveRecoveryStartTime.subscribe(walletAddress => instantPromise().then(() => app.ports.activeRecoveryStartTime.send(1495515488)));
+			app.ports.requestRecovererAddressList.subscribe(walletAddress => instantPromise().then(() => app.ports.recoveryAddressList.send(['0x90e63c3d53e0ea496845b7a03ec7548b70014a91', '0x53d284357ec70ce289d6d64134dfac8e511c8a3d'])));
+			app.ports.requestRecoveryWaitingPeriod.subscribe((walletAddress, recoveryAddress) => instantPromise().then(() => app.ports.recoveryWaitingPeriodDays.send(7)));
 
 			app.ports.createWallet.subscribe(recoveryDelayInDays => {});
 			app.ports.sendEth.subscribe((walletAddress, amount, recipientAddress) => {});
 			app.ports.sendTokens.subscribe((walletAddress, tokenAddress, amount, recipientAddress) => {});
-			app.ports.addRecoveryAddress.subscribe((walletAddress, newRecoverAddress) => {});
+			app.ports.addRecoveryAddress.subscribe((walletAddress, newRecoverAddress, waitingPeriod) => {});
 			app.ports.removeRecoveryAddress.subscribe((walletAddress, oldRecoverAddress) => {});
-			app.ports.cancelRecovery.subscribe((walletAddress) => {});
+			app.ports.cancelRecovery.subscribe(walletAddress => {});
 		</script>
 		<div class="warning">
 			<span>WARNING: This application is a work in progress!  Please don't use it yet, but check back later if it interests you.</span>

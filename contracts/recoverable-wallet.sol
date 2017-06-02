@@ -1,6 +1,6 @@
 pragma solidity 0.4.10;
 
-contract Token {
+contract Erc20Token {
 	function transfer(address recipient, uint256 amount) external returns (bool success);
 	function approve(address spender, uint256 value) external returns (bool success);
 }
@@ -21,6 +21,8 @@ contract RecoverableWalletFactory {
 	function getWalletFor(address walletOwner) external constant returns (RecoverableWallet) {
 		return _wallets[walletOwner];
 	}
+
+	// TODO: add a mechanism such that when a wallet changes owners, this mapping is updated; this may require a map => set since a user could change ownership to an account that already has a wallet
 }
 
 contract Ownable {
@@ -129,12 +131,12 @@ contract RecoverableWallet is Claimable {
 	}
 
 	function sendToken(address tokenAddress, address destination, uint256 amount) external onlyOwner {
-		Token token = Token(tokenAddress);
+		Token token = Erc20Token(tokenAddress);
 		require(token.transfer(destination, amount));
 	}
 
 	function approveToken(address tokenAddress, address spender, uint256 amount) external onlyOwner {
-		Token token = Token(tokenAddress);
+		Token token = Erc20Token(tokenAddress);
 		require(token.approve(spender, amount));
 	}
 

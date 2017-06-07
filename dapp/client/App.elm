@@ -16,13 +16,16 @@ type alias Amount =
 
 type alias Model =
     { address : Maybe Address
-    , eth : Amount
+    , wallet : Maybe Address
+    , eth : Maybe Amount
     }
 
 
 type Message
-    = AddressChanged String
+    = AddressChanged Address
+    | WalletChanged Address
     | RefreshAddress
+    | RequestWallet
 
 
 
@@ -33,6 +36,9 @@ port requestAddress : () -> Cmd message
 
 
 port requestWallet : Address -> Cmd message
+
+
+port requestTokenList : () -> Cmd message
 
 
 port requestCreateWalletGasEstimate : Address -> Cmd message
@@ -67,10 +73,21 @@ update : Message -> Model -> ( Model, Cmd Message )
 update message model =
     case message of
         AddressChanged newAddress ->
-            ( { model | address = Just newAddress }, Cmd.none )
+            ( { initialModel | address = Just newAddress }, Cmd.none )
+
+        WalletChanged newWallet ->
+            ( { model | wallet = Just newWallet, eth = Nothing }, Cmd.none )
 
         RefreshAddress ->
             ( model, requestAddress () )
+
+        RequestWallet ->
+            case model.address of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just address ->
+                    ( model, requestWallet address )
 
 
 
@@ -79,7 +96,10 @@ update message model =
 
 subscriptions : Model -> Sub Message
 subscriptions model =
-    addressChanged AddressChanged
+    Sub.batch
+        [ addressChanged AddressChanged
+        , walletChanged WalletChanged
+        ]
 
 
 
@@ -96,18 +116,49 @@ view model =
                 , div [ class "value" ] [ text <| showAddress model.address ]
                 ]
             ]
+        , viewWallet model
         ]
 
 
 showAddress : Maybe Address -> String
-showAddress x =
-    withDefault "No Address Available" x
+showAddress address =
+    address
+        |> withDefault "No Address Available"
+
+
+viewWallet : Model -> Html Message
+viewWallet model =
+    let
+        walletDiv =
+            case model.wallet of
+                Nothing ->
+                    div []
+                        [ button [ onClick RequestWallet ] [ text "RequestWallet" ]
+                        ]
+
+                Just wallet ->
+                    div []
+                        [ div [ class "value" ] [ text <| wallet ]
+                        ]
+    in
+        div []
+            [ div [ class "label" ] [ text "Wallet" ]
+            , walletDiv
+            ]
+
+
+initialModel : Model
+initialModel =
+    { address = Nothing
+    , wallet = Nothing
+    , eth = Nothing
+    }
 
 
 main : Program Never Model Message
 main =
     program
-        { init = ( { address = Nothing, eth = 0 }, requestAddress () )
+        { init = ( initialModel, requestAddress () )
         , view = view
         , update = update
         , subscriptions = subscriptions

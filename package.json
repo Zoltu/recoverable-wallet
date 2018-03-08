@@ -1,0 +1,17 @@
+{
+  "name": "recoverable-wallet",
+  "version": "1.0.0",
+  "description": "A smart wallet that is recoverable via backup keys.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zoltu/recoverable-wallet.git"
+  },
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/Zoltu/recoverable-wallet/issues"
+  },
+  "homepage": "https://github.com/Zoltu/recoverable-wallet#readme",
+  "dependencies": {
+    "solc": "^0.4.20"
+  }
+}

@@ -1,12 +1,12 @@
 pragma solidity 0.4.10;
 
-contract Token {
+contract TestToken {
 	mapping(address => uint256) _balances;
 
 	event Transfer(address indexed from, address indexed to, uint256 value);
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 
-	function Token() {
+	function TestToken() {
 		_balances[msg.sender] = 10**36;
 	}
 

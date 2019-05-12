@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset='utf-8'>
+</head>
+<body>
+	<script type='module' src='vendor/es-module-shims/es-module-shims.js'></script>
+	<script type='importmap-shim'>
+		{
+			"imports": {
+				"knockout": "vendor/knockout/knockout-latest.js"
+			}
+		}
+	</script>
+	<div class='loading' data-bind='visible: false'>
+		Loading...
+	</div>
+	<main style='display: none' data-bind='visible: true'>
+		<button data-bind='click: doThing'>Do Thing</button>
+		<span data-bind='text: value'></span>
+	</main>
+	<script type='module-shim'>
+		import 'knockout'
+		import { Main } from './models/main.js'
+		window.main = new Main()
+		ko.applyBindings(window.main)
+	</script>
+</body>

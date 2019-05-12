@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  parity:
+    image: "keydonix/parity-instantseal"
+    ports:
+      - target: "8545"
+        published: "1235"
+        protocol: "tcp"
+        mode: "host"
+
+  geth:
+    image: "keydonix/geth-clique"
+    ports:
+      - target: "8545"
+        published: "1236"
+        protocol: "tcp"
+        mode: "host"
+    environment:
+      GETH_VERBOSITY: "3"

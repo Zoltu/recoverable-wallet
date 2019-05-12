@@ -1,16 +1,23 @@
 {
-    "version": "0.1.0",
-    "command": "dotnet",
-    "isShellCommand": true,
-    "args": [],
-    "tasks": [
-        {
-            "taskName": "build",
-            "args": [
-                "${workspaceRoot}/dapp/server/server.csproj"
-            ],
-            "isBuildCommand": true,
-            "problemMatcher": "$msCompile"
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "watch",
+			"path": "browser-extension/",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"path": "sample-site/",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
+		}
+	]
 }

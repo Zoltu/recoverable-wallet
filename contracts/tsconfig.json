@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "es2018",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"strict": true,
+		"declaration": true,
+		"sourceMap": true,
+		"inlineSources": true,
+		"noEmitOnError": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": false,
+		"lib": [ "es2018" ],
+		"typeRoots": [ "node_modules/@types" ],
+		"rootDir": "source",
+		"outDir": "output",
+	},
+	"include": [
+		"source/**/*.ts"
+	]
+}

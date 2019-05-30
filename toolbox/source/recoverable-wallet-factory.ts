@@ -5,28 +5,31 @@ import { FriendlyRecoverableWallet } from './friendly-recoverable-wallet';
 
 export class FriendlyRecoverableWalletFactory {
 	public constructor(
-		private readonly rpc: FetchJsonRpc,
-		private readonly factory: RecoverableWalletFactory<bigint>,
+		private readonly factoryAddress: Address,
 	) { }
 
 	static create = async (rpc: FetchJsonRpc): Promise<FriendlyRecoverableWalletFactory> => {
-		const dependencies = new DependenciesImpl(rpc)
 		const signer = await rpc.getSignerAddress()
 		const deployerRemoteProcedureCall = async (method: RecoverableWalletJsonRpcMethod, params: Array<unknown>) => await rpc.remoteProcedureCall(method, params)
 		const deployerRpc = new RecoverableWalletJsonRpc(deployerRemoteProcedureCall, signer.to0xString(), `0x${(await rpc.getGasPriceInAttoeth()).toString(16)}`)
 		const recoverableWalletFactoryDeployer = new RecoverableWalletFactoryDeployer(deployerRpc)
 		const recoverableWalletFactoryAddress = await recoverableWalletFactoryDeployer.ensureFactoryDeployed()
-		const factory = new RecoverableWalletFactory(dependencies, Address.fromHexString(recoverableWalletFactoryAddress))
-		return new FriendlyRecoverableWalletFactory(rpc, factory)
+		return new FriendlyRecoverableWalletFactory(Address.fromHexString(recoverableWalletFactoryAddress))
 	}
 
-	public readonly createWallet = async (): Promise<FriendlyRecoverableWallet> => {
-		const events = await this.factory.create_wallet()
-		const walletCreatedEvent = events.find(x => x.name === 'wallet_created') as RecoverableWalletFactory.wallet_created<bigint>
-		if (walletCreatedEvent === undefined) throw new Error(`Expected wallet_created event.`)
-		const walletAddress = walletCreatedEvent.parameters.wallet
-		const dependencies = new DependenciesImpl(this.rpc)
+	private readonly getFactory = (rpc: FetchJsonRpc): RecoverableWalletFactory<bigint> => {
+		const dependencies = new DependenciesImpl(rpc)
+		return new RecoverableWalletFactory(dependencies, this.factoryAddress)
+	}
+
+	public readonly createWallet = async (rpc: FetchJsonRpc): Promise<FriendlyRecoverableWallet> => {
+		const events = await this.getFactory(rpc).createWallet(1)
+		const walletCreatedEvent = events.find(x => x.name === 'WalletCreated') as RecoverableWalletFactory.WalletCreated<bigint>
+		if (walletCreatedEvent === undefined) throw new Error(`Expected WalletCreated event.`)
+		const ownerAddress = walletCreatedEvent.parameters.owner
+		const walletAddress = await this.getFactory(rpc).getWalletFor_(ownerAddress)
+		const dependencies = new DependenciesImpl(rpc)
 		const recoverableWallet = new RecoverableWallet(dependencies, walletAddress)
-		return new FriendlyRecoverableWallet(this.rpc, recoverableWallet)
+		return new FriendlyRecoverableWallet(rpc, recoverableWallet)
 	}
 }

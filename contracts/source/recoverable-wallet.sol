@@ -1,162 +1,144 @@
 pragma solidity 0.5.8;
 
-interface Erc1820Registry {
-	function setInterfaceImplementer(address _addr, bytes32 _interfaceHash, address _implementer) external;
-}
-
-contract Erc777TokensRecipient {
-	constructor() public {
-		Erc1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24).setInterfaceImplementer(address(this), keccak256(abi.encodePacked("ERC777TokensRecipient")), address(this));
-	}
-	function tokensReceived(address, address, address, uint256, bytes calldata, bytes calldata) external { }
-	function canImplementInterfaceForAddress(address, bytes32) external pure returns(bytes32) { return keccak256(abi.encodePacked("ERC1820_ACCEPT_MAGIC")); }
-}
-
-contract Ownable {
-	event ownership_transfer_started(address indexed owner, address indexed pending_owner);
-	event ownership_transfer_cancelled(address indexed owner, address indexed pending_owner);
-	event ownership_transfer_finished(address indexed old_owner, address indexed new_owner);
-
-	address public owner;
-	address public pending_owner;
-
-	constructor(address _owner) public {
-		require(_owner != address(0), "Contract must have an owner.");
-		owner = _owner;
-	}
-
-	modifier only_owner() {
-		require(msg.sender == owner, "Only the owner may call this method.");
-		_;
-	}
-
-	modifier only_pending_owner() {
-		require(msg.sender == pending_owner, "Only the pending owner can call this method.");
-		_;
-	}
-
-	function start_ownership_transfer(address _pending_owner) external only_owner {
-		require(_pending_owner != address(0), "Contract must have an owner.");
-		pending_owner = _pending_owner;
-		emit ownership_transfer_started(owner, pending_owner);
-	}
-
-	function cancel_ownership_transfer() external only_owner {
-		address _pending_owner = pending_owner;
-		pending_owner = address(0);
-		emit ownership_transfer_cancelled(owner, _pending_owner);
-	}
-
-	function accept_ownership() external only_pending_owner {
-		address _old_owner = owner;
-		owner = pending_owner;
-		pending_owner = address(0);
-		emit ownership_transfer_finished(_old_owner, owner);
-	}
-}
-
-contract RecoverableWallet is Ownable, Erc777TokensRecipient {
-	event recovery_address_added(address indexed new_recoverer, uint256 recovery_delay_in_days);
-	event recovery_address_removed(address indexed old_recoverer);
-	event recovery_started(address indexed new_owner);
-	event recovery_cancelled();
-	event recovery_finished(address indexed new_pending_owner);
-
-	mapping(address => uint16) public recovery_delays;
-	address public active_recovery_address;
-	uint256 public active_recovery_end_time = uint256(-1);
-
-	modifier only_during_recovery() {
-		require(active_recovery_address != address(0), "This method can only be called during a recovery.");
-		_;
-	}
-
-	modifier only_outside_recovery() {
-		require(active_recovery_address == address(0), "This method cannot be called during a recovery.");
-		_;
-	}
-
-	constructor(address _initial_owner) Ownable(_initial_owner) public {
-		reset_recovery();
-	}
-
-	// accept ETH into this contract
-	function () external payable { }
-
-	function add_recovery_address(address _new_recovery_address, uint16 _recovery_delay_in_days) external only_owner only_outside_recovery {
-		require(_recovery_delay_in_days > 0, "Recovery delay must be at least 1 day.");
-		recovery_delays[_new_recovery_address] = _recovery_delay_in_days;
-		emit recovery_address_added(_new_recovery_address, _recovery_delay_in_days);
-	}
-
-	function remove_recovery_address(address _old_recovery_address) external only_owner only_outside_recovery {
-		recovery_delays[_old_recovery_address] = 0;
-		emit recovery_address_removed(_old_recovery_address);
-	}
-
-	function start_recovery() external {
-		uint16 _proposed_recovery_delay = recovery_delays[msg.sender];
-		require(_proposed_recovery_delay != 0, "Only designated recovery addresseses can initiate the recovery process.");
-
-		bool _in_recovery = active_recovery_address != address(0);
-		if (_in_recovery) {
-			// NOTE: the recovery address cannot change during recovery, so we can rely on this being != 0
-			uint16 _active_recovery_delay = recovery_delays[active_recovery_address];
-			require(_proposed_recovery_delay < _active_recovery_delay, "Recovery is already under way and new recovery doesn't have a higher priority.");
-		}
-
-		active_recovery_address = msg.sender;
-		active_recovery_end_time = block.timestamp + _proposed_recovery_delay * 1 days;
-		emit recovery_started(msg.sender);
-	}
-
-	function cancel_recovery() external only_owner only_during_recovery {
-		reset_recovery();
-		emit recovery_cancelled();
-	}
-
-	function finish_recovery() external only_during_recovery {
-		require(active_recovery_address != address(0), "No recovery in progress.");
-		require(block.timestamp > active_recovery_end_time, "You must wait until the recovery delay is over before finishing the recovery.");
-
-		pending_owner = active_recovery_address;
-		reset_recovery();
-		emit recovery_finished(pending_owner);
-	}
-
-	function deploy(uint256 _value, bytes calldata _data, uint256 _salt) external payable only_owner only_outside_recovery returns (address) {
-		bytes memory _data2 = _data;
-		address new_contract;
-		/* solium-disable-next-line */
-		assembly {
-			new_contract := create2(_value, add(_data2, 32), mload(_data2), _salt)
-		}
-		require(new_contract != address(0), "Contract creation failed.");
-		return new_contract;
-	}
-
-	function execute(address payable _to, uint256 _value, bytes calldata _data) external payable only_owner only_outside_recovery returns (bytes memory) {
-		(bool _success, bytes memory _result) = _to.call.value(_value)(_data);
-		require(_success, "Contract execution failed.");
-		return _result;
-	}
-
-	function reset_recovery() private {
-		active_recovery_address = address(0);
-		active_recovery_end_time = uint256(-1);
-	}
+contract Token {
+	function transfer(address recipient, uint256 amount) external returns (bool success);
+	function approve(address spender, uint256 value) external returns (bool success);
 }
 
 contract RecoverableWalletFactory {
-	event wallet_created(address indexed owner, RecoverableWallet indexed wallet);
+	event WalletCreated(address indexed owner);
 
-	function create_wallet() external returns (RecoverableWallet) {
-		RecoverableWallet wallet = new RecoverableWallet(msg.sender);
-		emit wallet_created(msg.sender, wallet);
-		return wallet;
+	mapping(address => RecoverableWallet) private _wallets;
+
+	function createWallet(uint8 recoveryDelayInDays) external returns (RecoverableWallet) {
+		require(_wallets[msg.sender] == RecoverableWallet(0) || _wallets[msg.sender]._owner() == msg.sender);
+		RecoverableWallet newWallet = new RecoverableWallet(recoveryDelayInDays, msg.sender);
+		_wallets[msg.sender] = newWallet;
+		emit WalletCreated(msg.sender);
+		return newWallet;
 	}
 
-	function exists() external pure returns (bytes32) {
-		return 0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef;
+	function getWalletFor(address walletOwner) external view returns (RecoverableWallet) {
+		return _wallets[walletOwner];
 	}
+}
+
+contract Ownable {
+	event OwnerChanged(address indexed oldOwner, address indexed newOwner);
+
+	address public _owner;
+
+	constructor (address owner) public {
+		_owner = owner;
+	}
+
+	modifier onlyOwner() {
+		require(msg.sender == _owner);
+		_;
+	}
+
+	function transferOwnership(address newOwner) external onlyOwner {
+		require(newOwner != address(0));
+		address oldOwner = _owner;
+		_owner = newOwner;
+		emit OwnerChanged(oldOwner, _owner);
+	}
+}
+
+contract Claimable is Ownable {
+	event OwnershipTransferStarted(address indexed oldOwner, address indexed newOwner);
+	event OwnershipTransferFinished(address indexed oldOwner, address indexed newOwner);
+
+	address public _pendingOwner;
+
+	modifier onlyPendingOwner() {
+		require(msg.sender == _pendingOwner);
+		_;
+	}
+
+	constructor (address owner) public Ownable(owner) {}
+
+	function transferOwnership(address newOwner) external onlyOwner {
+		require(newOwner != address(0));
+		_pendingOwner = newOwner;
+		emit OwnershipTransferStarted(_owner, _pendingOwner);
+	}
+
+	function claimOwnership() external onlyPendingOwner {
+		address oldOwner = _owner;
+		_owner = _pendingOwner;
+		_pendingOwner = address(0);
+		emit OwnershipTransferFinished(oldOwner, _owner);
+	}
+}
+
+contract RecoverableWallet is Claimable {
+	event RecoveryAddressAdded(address indexed newRecoverer);
+	event RecoveryAddressRemoved(address indexed oldRecoverer);
+	event RecoveryStarted(address indexed newOwner);
+	event RecoveryCancelled();
+	event RecoveryFinished(address indexed newOwner);
+
+	mapping(address => bool) public _recoveryAddresses;
+	address public _activeRecoveryAddress;
+	uint256 public _activeRecoveryStartTime;
+	uint8 public _recoveryDelayDays;
+
+	constructor (uint8 recoveryDelayInDays, address owner) public Claimable(owner) {
+		require(owner != address(0));
+		_recoveryDelayDays = recoveryDelayInDays;
+	}
+
+	function () external payable { }
+
+	function addRecoveryAddress(address newRecoveryAddress) external onlyOwner {
+		_recoveryAddresses[newRecoveryAddress] = true;
+		emit RecoveryAddressAdded(newRecoveryAddress);
+	}
+
+	function removeRecoveryAddress(address oldRecoveryAddress) external onlyOwner {
+		_recoveryAddresses[oldRecoveryAddress] = false;
+		emit RecoveryAddressRemoved(oldRecoveryAddress);
+	}
+
+	function startRecovery(address newOwnerAddress) external {
+		require(_recoveryAddresses[msg.sender]);
+		require(_activeRecoveryAddress == address(0));
+
+		_activeRecoveryAddress = newOwnerAddress;
+		_activeRecoveryStartTime = block.timestamp;
+		emit RecoveryStarted(newOwnerAddress);
+	}
+
+	function cancelRecovery() external onlyOwner {
+		_activeRecoveryAddress = address(0);
+		_activeRecoveryStartTime = 0;
+		emit RecoveryCancelled();
+	}
+
+	function finishRecovery() external {
+		require(_activeRecoveryAddress != address(0));
+		require(block.timestamp > _activeRecoveryStartTime + _recoveryDelayDays * 1 days);
+
+		_pendingOwner = _activeRecoveryAddress;
+		_activeRecoveryAddress = address(0);
+		_activeRecoveryStartTime = 0;
+		emit RecoveryFinished(_pendingOwner);
+	}
+
+	function sendEther(address payable destination, uint256 amount) external onlyOwner {
+		destination.transfer(amount);
+	}
+
+	function sendToken(address tokenAddress, address destination, uint256 amount) external onlyOwner {
+		Token token = Token(tokenAddress);
+		require(token.transfer(destination, amount));
+	}
+
+	function approveToken(address tokenAddress, address spender, uint256 amount) external onlyOwner {
+		Token token = Token(tokenAddress);
+		require(token.approve(spender, amount));
+	}
+
+	// TODO: allow calling arbitrary contracts by owner
 }

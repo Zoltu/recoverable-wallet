@@ -1,4 +1,4 @@
-import { Address, Bytes, Bytes1, Bytes32, EncodedEvent } from '@zoltu/recoverable-wallet-library'
+import { Address, Bytes, Bytes32, EncodedEvent } from '@zoltu/recoverable-wallet-library'
 import { hexStringToUnsignedBigint, unsignedBigintToUint8Array } from '@zoltu/bigint-helpers'
 import { rlpEncode } from '@zoltu/rlp-encoder'
 import { ErrorWithData } from './error-with-data'
@@ -103,7 +103,7 @@ export class SignedTransaction implements TransactionLike {
 	public readonly chainId: number
 	public constructor(
 		unsignedTransaction: UnsignedTransaction,
-		public readonly v: Bytes1,
+		public readonly v: Bytes32,
 		public readonly r: Bytes32,
 		public readonly s: Bytes32,
 	) {
@@ -122,7 +122,7 @@ type JsonRpcResponse = JsonRpcSuccess | JsonRpcError
 export class FetchJsonRpc {
 	public constructor(
 		private readonly jsonRpcEndpoint: string,
-		private readonly sign: (bytes: Bytes) => Promise<{ r: Bytes32, s: Bytes32, v: Bytes1 }>,
+		private readonly sign: (bytes: Bytes, chainId?: number) => Promise<{ r: Bytes32, s: Bytes32, v: number }>,
 		public readonly getSignerAddress: () => Promise<Address>,
 		public readonly getGasPriceInAttoeth: () => Promise<bigint>,
 		private readonly chainId: number,
@@ -143,10 +143,10 @@ export class FetchJsonRpc {
 			transaction.chainId || this.chainId,
 		)
 		const rlpEncodedUnsignedTransaction = this.rlpEncodeTransaction(unsignedTransaction)
-		const signature = await this.sign(rlpEncodedUnsignedTransaction)
+		const signature = await this.sign(rlpEncodedUnsignedTransaction, unsignedTransaction.chainId)
 		const signedTransaction = new SignedTransaction(
 			unsignedTransaction,
-			signature.v,
+			Bytes32.fromHexString(signature.v.toString(16).padStart(64, '0')),
 			signature.r,
 			signature.s,
 		)
@@ -248,7 +248,7 @@ export class FetchJsonRpc {
 			toEncode.push(stripZeros(new Uint8Array(0)))
 			toEncode.push(stripZeros(new Uint8Array(0)))
 		} else {
-			toEncode.push(stripZeros(Bytes.fromHexString((Number.parseInt(transaction.v.toString(), 16) + transaction.chainId * 2 + 8).toString(16))))
+			toEncode.push(stripZeros(transaction.v))
 			toEncode.push(stripZeros(transaction.r))
 			toEncode.push(stripZeros(transaction.s))
 		}

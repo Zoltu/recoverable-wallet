@@ -1,4 +1,4 @@
-import { RecoverableWallet, Address, Bytes } from '@zoltu/recoverable-wallet-library'
+import { RecoverableWallet, Address } from '@zoltu/recoverable-wallet-library'
 import { FetchJsonRpc } from './fetch-json-rpc'
 import { toAttoeth, toEth } from './utils';
 
@@ -22,6 +22,6 @@ export class FriendlyRecoverableWallet {
 	}
 
 	public readonly sendEther = async (destination: Address, amountInEth: number): Promise<void> => {
-		await this.wallet.execute(destination, toAttoeth(amountInEth), new Bytes())
+		await this.wallet.sendEther(destination, toAttoeth(amountInEth))
 	}
 }

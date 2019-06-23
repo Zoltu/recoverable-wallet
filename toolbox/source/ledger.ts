@@ -2,7 +2,7 @@
 import 'babel-polyfill'
 import LedgerTransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 import LedgerEth from '@ledgerhq/hw-app-eth'
-import { Address, Bytes32, Bytes, Bytes1 } from "@zoltu/recoverable-wallet-library";
+import { Address, Bytes32, Bytes, Bytes1 } from "@zoltu/ethereum-types";
 import { Lock } from 'semaphore-async-await'
 
 export class Ledger {

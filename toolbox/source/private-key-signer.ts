@@ -1,6 +1,6 @@
 import { ec as EllipticCurve } from 'elliptic'
 import { keccak256 } from 'js-sha3'
-import { Bytes, Bytes32, Bytes1, Address } from '@zoltu/recoverable-wallet-library';
+import { Bytes, Bytes32, Bytes1, Address } from '@zoltu/ethereum-types';
 const secp256k1 = new EllipticCurve('secp256k1')
 
 export class Signer {

@@ -1,19 +1,19 @@
-import { RecoverableWallet, Address, Bytes } from '@zoltu/recoverable-wallet-library'
-import { FetchJsonRpc } from './fetch-json-rpc'
+import { RecoverableWallet } from '@zoltu/recoverable-wallet-library'
+import { Address, Bytes, JsonRpc, AddressLike } from '@zoltu/ethereum-types'
 import { toAttoeth, toEth } from './utils';
 
 export class FriendlyRecoverableWallet {
 	public constructor(
-		private readonly rpc: FetchJsonRpc,
+		private readonly rpc: JsonRpc,
 		private readonly wallet: RecoverableWallet<bigint>
 	) { }
 
 	public readonly getAddress = async (): Promise<Address> => {
-		return this.wallet.address
+		return Address.fromHexString(this.wallet.address.toString())
 	}
 
 	public readonly getAttoethBalance = async (): Promise<bigint> => {
-		return await this.rpc.ethGetBalance(this.wallet.address)
+		return await this.rpc.getBalance(this.wallet.address as AddressLike)
 	}
 
 	public readonly getEthBalance = async (): Promise<number> => {

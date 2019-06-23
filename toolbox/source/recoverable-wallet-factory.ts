@@ -1,19 +1,19 @@
-import { Address, RecoverableWalletFactory, RecoverableWallet, RecoverableWalletFactoryDeployer, RecoverableWalletJsonRpc, RecoverableWalletJsonRpcMethod } from '@zoltu/recoverable-wallet-library';
-import { FetchJsonRpc } from "./fetch-json-rpc";
+import { RecoverableWalletFactory, RecoverableWallet, RecoverableWalletFactoryDeployer, RecoverableWalletJsonRpc, RecoverableWalletJsonRpcMethod, Address } from '@zoltu/recoverable-wallet-library';
 import { DependenciesImpl } from './dependencies';
 import { FriendlyRecoverableWallet } from './friendly-recoverable-wallet';
+import { JsonRpc, RawTransactionReceipt } from '@zoltu/ethereum-types';
 
 export class FriendlyRecoverableWalletFactory {
 	public constructor(
-		private readonly rpc: FetchJsonRpc,
+		private readonly rpc: JsonRpc,
 		private readonly factory: RecoverableWalletFactory<bigint>,
 	) { }
 
-	static create = async (rpc: FetchJsonRpc): Promise<FriendlyRecoverableWalletFactory> => {
+	static deploy = async (rpc: JsonRpc): Promise<FriendlyRecoverableWalletFactory> => {
 		const dependencies = new DependenciesImpl(rpc)
-		const signer = await rpc.getSignerAddress()
-		const deployerRemoteProcedureCall = async (method: RecoverableWalletJsonRpcMethod, params: Array<unknown>) => await rpc.remoteProcedureCall(method, params)
-		const deployerRpc = new RecoverableWalletJsonRpc(deployerRemoteProcedureCall, signer.to0xString(), `0x${(await rpc.getGasPriceInAttoeth()).toString(16)}`)
+		const signer = await rpc.coinbase()
+		const deployerRemoteProcedureCall = async (method: RecoverableWalletJsonRpcMethod, params: Array<unknown>) => (await rpc.remoteProcedureCall({ jsonrpc: "2.0", id: null, method, params }) as { result: RawTransactionReceipt}).result
+		const deployerRpc = new RecoverableWalletJsonRpc(deployerRemoteProcedureCall, signer.to0xString(), `0x${(await rpc.getGasPrice()).toString(16)}`)
 		const recoverableWalletFactoryDeployer = new RecoverableWalletFactoryDeployer(deployerRpc)
 		const recoverableWalletFactoryAddress = await recoverableWalletFactoryDeployer.ensureFactoryDeployed()
 		const factory = new RecoverableWalletFactory(dependencies, Address.fromHexString(recoverableWalletFactoryAddress))

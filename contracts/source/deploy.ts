@@ -14,16 +14,14 @@ export interface Transaction {
 
 interface TransactionReceipt {
 	blockNumber: string | null | undefined,
-	contractAddress: string | null,
 	status: string,
-	logs: Array<{ topics: Array<string>, data: string }>
 }
 
 const sleep = async (milliseconds: number): Promise<void> => new Promise(resolve => setTimeout(resolve, milliseconds))
 
 export class JsonRpc {
 	public constructor(
-		private readonly rpc: (method: JsonRpcMethod, params: Array<unknown>) => Promise<unknown>,
+		private readonly rpc: (method: JsonRpcMethod, params: Array<unknown>) => Promise<string | TransactionReceipt>,
 		private readonly signerAddress: string,
 		private readonly gasPrice: string,
 	) { }
@@ -36,7 +34,6 @@ export class JsonRpc {
 		let receipt: TransactionReceipt
 		while (!(receipt = await this.getReceipt(transactionHash)) || !receipt.blockNumber) { await sleep(1000) }
 		if (receipt.status !== '0x1') throw new Error(`Transaction mined, but failed.`)
-		return receipt.logs
 	}
 	public readonly callTransaction = async (transaction: Transaction) => await this.rpc('eth_call', [transaction, 'latest']) as string
 	public readonly sendTransaction = async (transaction: Transaction) => {
@@ -48,11 +45,11 @@ export class JsonRpc {
 		transaction.nonce = transaction.nonce || await this.getNonce()
 		transaction.gas = transaction.gas || await this.estimateGas(transaction)
 		const transactionHash = await this.rpc('eth_sendTransaction', [transaction]) as string
-		return await this.transactionMined(transactionHash)
+		await this.transactionMined(transactionHash)
 	}
 	public readonly sendRawTransaction = async (transaction: string) => {
 		const transactionHash = await this.rpc('eth_sendRawTransaction', [transaction]) as string
-		return await this.transactionMined(transactionHash)
+		await this.transactionMined(transactionHash)
 	}
 	public readonly sendEth = async (destination: string, amount: string) => this.sendTransaction({ to: destination, value: amount, gas: '0x5208' })
 }

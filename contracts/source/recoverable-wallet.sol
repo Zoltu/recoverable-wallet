@@ -104,7 +104,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 		emit RecoveryAddressAdded(_newRecoveryAddress, _recoveryDelayInDays);
 	}
 
-	function removeRecoveryAddress(address _oldRecoveryAddress) external onlyOwner onlyOutsideRecovery {
+	function removeRecoveryAddress(address _oldRecoveryAddress) public onlyOwner onlyOutsideRecovery {
 		recoveryDelays[_oldRecoveryAddress] = 0;
 		emit RecoveryAddressRemoved(_oldRecoveryAddress);
 	}
@@ -125,9 +125,16 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 		emit RecoveryStarted(msg.sender);
 	}
 
-	function cancelRecovery() external onlyOwner onlyDuringRecovery {
+	function cancelRecovery() public onlyOwner onlyDuringRecovery {
 		resetRecovery();
 		emit RecoveryCancelled();
+	}
+
+	/// @notice cancels an active recovery and removes the recovery address from the recoverer collection.  used when a recovery key becomes compromised and attempts to initiate a recovery
+	function cancelRecoveryAndRemoveRecoveryAddress() external onlyOwner onlyDuringRecovery {
+		address _recoveryAddress = activeRecoveryAddress;
+		cancelRecovery();
+		removeRecoveryAddress(_recoveryAddress);
 	}
 
 	function finishRecovery() external onlyDuringRecovery {

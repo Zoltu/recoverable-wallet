@@ -91,9 +91,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 		_;
 	}
 
-	constructor(address _initialOwner) Ownable(_initialOwner) public {
-		resetRecovery();
-	}
+	constructor(address _initialOwner) Ownable(_initialOwner) public { }
 
 	// accept ETH into this contract
 	function () external payable { }

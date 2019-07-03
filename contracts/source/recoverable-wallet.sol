@@ -1,15 +1,30 @@
 pragma solidity 0.5.8;
 
+/// @notice https://eips.ethereum.org/EIPS/eip-1820
 interface Erc1820Registry {
-	function setInterfaceImplementer(address _addr, bytes32 _interfaceHash, address _implementer) external;
+	function setInterfaceImplementer(address _target, bytes32 _interfaceHash, address _implementer) external;
 }
 
 contract Erc777TokensRecipient {
 	constructor() public {
-		Erc1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24).setInterfaceImplementer(address(this), keccak256(abi.encodePacked("ERC777TokensRecipient")), address(this));
+		// keccak256(abi.encodePacked("ERC777TokensRecipient")) == 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b
+		Erc1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24).setInterfaceImplementer(address(this), 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b, address(this));
 	}
 	function tokensReceived(address, address, address, uint256, bytes calldata, bytes calldata) external { }
-	function canImplementInterfaceForAddress(address, bytes32) external pure returns(bytes32) { return keccak256(abi.encodePacked("ERC1820_ACCEPT_MAGIC")); }
+
+	/// @notice Indicates whether the contract implements the interface `interfaceHash` for the address `addr` or not.
+	/// @param _interfaceHash keccak256 hash of the name of the interface
+	/// @param _implementer Address for which the contract will implement the interface
+	/// @return ERC1820_ACCEPT_MAGIC only if the contract implements `interfaceHash` for the address `addr`.
+	function canImplementInterfaceForAddress(bytes32 _interfaceHash, address _implementer) external view returns(bytes32) {
+		// keccak256(abi.encodePacked("ERC777TokensRecipient")) == 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b
+		if (_implementer == address(this) && _interfaceHash == 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b) {
+			// keccak256(abi.encodePacked("ERC1820_ACCEPT_MAGIC")) == 0xa2ef4600d742022d532d4747cb3547474667d6f13804902513b2ec01c848f4b4
+			return 0xa2ef4600d742022d532d4747cb3547474667d6f13804902513b2ec01c848f4b4;
+		} else {
+			return bytes32(0);
+		}
+	}
 }
 
 contract Ownable {

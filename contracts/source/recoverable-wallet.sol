@@ -82,7 +82,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	event RecoveryCancelled(address indexed oldRecoverer);
 	event RecoveryFinished(address indexed newPendingOwner);
 
-	mapping(address => uint16) public recoveryDelays;
+	mapping(address => uint16) public recoveryDelaysInDays;
 	address public activeRecoveryAddress;
 	uint256 public activeRecoveryEndTime = uint256(-1);
 
@@ -103,29 +103,29 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 
 	function addRecoveryAddress(address _newRecoveryAddress, uint16 _recoveryDelayInDays) external onlyOwner onlyOutsideRecovery {
 		require(_recoveryDelayInDays > 0, "Recovery delay must be at least 1 day.");
-		recoveryDelays[_newRecoveryAddress] = _recoveryDelayInDays;
+		recoveryDelaysInDays[_newRecoveryAddress] = _recoveryDelayInDays;
 		emit RecoveryAddressAdded(_newRecoveryAddress, _recoveryDelayInDays);
 	}
 
 	function removeRecoveryAddress(address _oldRecoveryAddress) public onlyOwner onlyOutsideRecovery {
-		recoveryDelays[_oldRecoveryAddress] = 0;
+		recoveryDelaysInDays[_oldRecoveryAddress] = 0;
 		emit RecoveryAddressRemoved(_oldRecoveryAddress);
 	}
 
 	function startRecovery() external {
-		uint16 _proposedRecoveryDelay = recoveryDelays[msg.sender];
-		require(_proposedRecoveryDelay != 0, "Only designated recovery addresseses can initiate the recovery process.");
+		uint16 _proposedRecoveryDelayInDays = recoveryDelaysInDays[msg.sender];
+		require(_proposedRecoveryDelayInDays != 0, "Only designated recovery addresseses can initiate the recovery process.");
 
 		bool _inRecovery = activeRecoveryAddress != address(0);
 		if (_inRecovery) {
 			// NOTE: the delay for a particular recovery address cannot be changed during recovery nor can addresses be removed during recovery, so we can rely on this being != 0
-			uint16 _activeRecoveryDelay = recoveryDelays[activeRecoveryAddress];
-			require(_proposedRecoveryDelay < _activeRecoveryDelay, "Recovery is already under way and new recovery doesn't have a higher priority.");
+			uint16 _activeRecoveryDelayInDays = recoveryDelaysInDays[activeRecoveryAddress];
+			require(_proposedRecoveryDelayInDays < _activeRecoveryDelayInDays, "Recovery is already under way and new recovery doesn't have a higher priority.");
 			emit RecoveryCancelled(activeRecoveryAddress);
 		}
 
 		activeRecoveryAddress = msg.sender;
-		activeRecoveryEndTime = block.timestamp + _proposedRecoveryDelay * 1 days;
+		activeRecoveryEndTime = block.timestamp + _proposedRecoveryDelayInDays * 1 days;
 		emit RecoveryStarted(msg.sender);
 	}
 

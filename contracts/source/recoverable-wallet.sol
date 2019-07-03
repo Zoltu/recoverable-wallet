@@ -45,11 +45,6 @@ contract Ownable {
 		_;
 	}
 
-	modifier onlyPendingOwner() {
-		require(msg.sender == pendingOwner, "Only the pending owner can call this method.");
-		_;
-	}
-
 	function startOwnershipTransfer(address _pendingOwner) external onlyOwner {
 		require(_pendingOwner != address(0), "Contract must have an owner.");
 		// we want to ensure that we get a cancelled or finished event for every ownership transfer, so if a transfer is in progres we first cancel it
@@ -67,7 +62,8 @@ contract Ownable {
 		emit OwnershipTransferCancelled(owner, _pendingOwner);
 	}
 
-	function acceptOwnership() external onlyPendingOwner {
+	function acceptOwnership() external {
+		require(msg.sender == pendingOwner, "Only the pending owner can call this method.");
 		address _oldOwner = owner;
 		owner = pendingOwner;
 		pendingOwner = address(0);

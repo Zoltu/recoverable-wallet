@@ -79,7 +79,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	event RecoveryAddressAdded(address indexed newRecoverer, uint16 recoveryDelayInDays);
 	event RecoveryAddressRemoved(address indexed oldRecoverer);
 	event RecoveryStarted(address indexed newOwner);
-	event RecoveryCancelled();
+	event RecoveryCancelled(address indexed oldRecoverer);
 	event RecoveryFinished(address indexed newPendingOwner);
 
 	mapping(address => uint16) public recoveryDelays;
@@ -121,7 +121,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 			// NOTE: the delay for a particular recovery address cannot be changed during recovery nor can addresses be removed during recovery, so we can rely on this being != 0
 			uint16 _activeRecoveryDelay = recoveryDelays[activeRecoveryAddress];
 			require(_proposedRecoveryDelay < _activeRecoveryDelay, "Recovery is already under way and new recovery doesn't have a higher priority.");
-			emit RecoveryCancelled();
+			emit RecoveryCancelled(activeRecoveryAddress);
 		}
 
 		activeRecoveryAddress = msg.sender;
@@ -130,8 +130,9 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	}
 
 	function cancelRecovery() public onlyOwner onlyDuringRecovery {
+		address _recoveryAddress = activeRecoveryAddress;
 		resetRecovery();
-		emit RecoveryCancelled();
+		emit RecoveryCancelled(_recoveryAddress);
 	}
 
 	/// @notice cancels an active recovery and removes the recovery address from the recoverer collection.  used when a recovery key becomes compromised and attempts to initiate a recovery

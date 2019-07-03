@@ -151,17 +151,18 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	}
 
 	function deploy(uint256 _value, bytes calldata _data, uint256 _salt) external payable onlyOwner onlyOutsideRecovery returns (address) {
+		require(address(this).balance >= _value, "Wallet does not have enough funds available to deploy the contract.");
+		require(_data.length != 0, "Contract deployment must contain bytecode to deploy.");
 		bytes memory _data2 = _data;
 		address newContract;
 		/* solium-disable-next-line */
-		assembly {
-			newContract := create2(_value, add(_data2, 32), mload(_data2), _salt)
-		}
-		require(newContract != address(0), "Contract creation failed.");
+		assembly { newContract := create2(_value, add(_data2, 32), mload(_data2), _salt) }
+		require(newContract != address(0), "Contract creation returned address 0, indicating failure.");
 		return newContract;
 	}
 
 	function execute(address payable _to, uint256 _value, bytes calldata _data) external payable onlyOwner onlyOutsideRecovery returns (bytes memory) {
+		require(address(this).balance >= _value, "Wallet does not have enough funds available to execute the desired transaction.");
 		(bool _success, bytes memory _result) = _to.call.value(_value)(_data);
 		require(_success, "Contract execution failed.");
 		return _result;

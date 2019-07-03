@@ -105,6 +105,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	}
 
 	function removeRecoveryAddress(address _oldRecoveryAddress) public onlyOwner onlyOutsideRecovery {
+		require(_oldRecoveryAddress != address(0), "Recovery address must be supplied.");
 		recoveryDelaysInDays[_oldRecoveryAddress] = 0;
 		emit RecoveryAddressRemoved(_oldRecoveryAddress);
 	}
@@ -163,6 +164,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	}
 
 	function execute(address payable _to, uint256 _value, bytes calldata _data) external payable onlyOwner onlyOutsideRecovery returns (bytes memory) {
+		require(_to != address(0), "Transaction execution must contain a destination.  If you meant to deploy a contract, use deploy instead.");
 		require(address(this).balance >= _value, "Wallet does not have enough funds available to execute the desired transaction.");
 		(bool _success, bytes memory _result) = _to.call.value(_value)(_data);
 		require(_success, "Contract execution failed.");

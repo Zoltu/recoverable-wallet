@@ -137,7 +137,6 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 
 	/// @notice finishes the recovery process after the necessary delay has elapsed.  callable by anyone in case the keys controlling the active recovery address have been lost, since once this is called a new recovery (with a potentially lower recovery priority) can begin.
 	function finishRecovery() external onlyDuringRecovery {
-		require(activeRecoveryAddress != address(0), "No recovery in progress.");
 		require(block.timestamp > activeRecoveryEndTime, "You must wait until the recovery delay is over before finishing the recovery.");
 
 		address _oldOwner = owner;

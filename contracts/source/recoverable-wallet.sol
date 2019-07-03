@@ -71,7 +71,7 @@ contract Ownable {
 }
 
 contract RecoverableWallet is Ownable, Erc777TokensRecipient {
-	event RecoveryAddressAdded(address indexed newRecoverer, uint256 recoveryDelayInDays);
+	event RecoveryAddressAdded(address indexed newRecoverer, uint16 recoveryDelayInDays);
 	event RecoveryAddressRemoved(address indexed oldRecoverer);
 	event RecoveryStarted(address indexed newOwner);
 	event RecoveryCancelled();

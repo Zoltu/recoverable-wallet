@@ -61,6 +61,7 @@ contract Ownable {
 	}
 
 	function cancelOwnershipTransfer() public onlyOwner {
+		require(pendingOwner != address(0), "There is no pending transfer to be cancelled.");
 		address _pendingOwner = pendingOwner;
 		pendingOwner = address(0);
 		emit OwnershipTransferCancelled(owner, _pendingOwner);

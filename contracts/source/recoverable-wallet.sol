@@ -121,6 +121,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 			// NOTE: the delay for a particular recovery address cannot be changed during recovery nor can addresses be removed during recovery, so we can rely on this being != 0
 			uint16 _activeRecoveryDelay = recoveryDelays[activeRecoveryAddress];
 			require(_proposedRecoveryDelay < _activeRecoveryDelay, "Recovery is already under way and new recovery doesn't have a higher priority.");
+			emit RecoveryCancelled();
 		}
 
 		activeRecoveryAddress = msg.sender;

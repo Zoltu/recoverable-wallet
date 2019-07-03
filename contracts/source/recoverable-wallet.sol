@@ -102,6 +102,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	function () external payable { }
 
 	function addRecoveryAddress(address _newRecoveryAddress, uint16 _recoveryDelayInDays) external onlyOwner onlyOutsideRecovery {
+		require(_newRecoveryAddress != address(0), "Recovery address must be supplied.");
 		require(_recoveryDelayInDays > 0, "Recovery delay must be at least 1 day.");
 		recoveryDelaysInDays[_newRecoveryAddress] = _recoveryDelayInDays;
 		emit RecoveryAddressAdded(_newRecoveryAddress, _recoveryDelayInDays);

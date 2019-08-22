@@ -1,0 +1,29 @@
+{
+	"description": "N/A",
+	"repository": {},
+	"license": "Unlicense",
+	"dependencies": {
+		"@ledgerhq/hw-app-eth": "4.64.0",
+		"@ledgerhq/hw-transport": "4.64.0",
+		"@ledgerhq/hw-transport-node-hid": "4.64.0",
+		"@types/chai": "4.1.7",
+		"@types/elliptic": "6.4.8",
+		"@types/ledgerhq__hw-transport": "4.21.1",
+		"@types/ledgerhq__hw-transport-node-hid": "4.22.1",
+		"@types/node": "12.0.0",
+		"@types/node-fetch": "2.3.3",
+		"@zoltu/bigint-helpers": "2.0.0",
+		"@zoltu/ethereum-fetch-json-rpc": "1.0.0",
+		"@zoltu/ethereum-types": "1.0.0",
+		"@zoltu/recoverable-wallet-library": "file:../contracts",
+		"@zoltu/rlp-encoder": "1.0.0",
+		"babel-polyfill": "6.26.0",
+		"chai": "4.2.0",
+		"elliptic": "6.4.1",
+		"js-sha3": "0.8.0",
+		"node-fetch": "2.5.0",
+		"semaphore-async-await": "1.5.1",
+		"ts-node": "8.1.0",
+		"typescript": "3.4.5"
+	}
+}

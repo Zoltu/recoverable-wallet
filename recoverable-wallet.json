@@ -1,8 +1,0 @@
-{
-	"id": "recoverable-wallet",
-	"name": "Recoverable Wallet",
-	"description": "Allows the usage of a hardware wallet without having to store the recovery mnemonic.  This is achieved by storing assets in a contract and providing the contract with a mechanism for taking ownership.",
-	"version": "0.0.1",
-	"author": "Micah Zoltu",
-	"iconUrl": "dapp/zoltu-icon-64x64.png"
-}

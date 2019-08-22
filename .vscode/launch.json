@@ -4,12 +4,6 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "browser-extension - watch",
-			"program": "${workspaceFolder}\\browser-extension\\build\\watch.js",
-		},
-		{
-			"type": "node",
-			"request": "launch",
 			"name": "contracts - compile",
 			"cwd": "${workspaceFolder}/contracts/",
 			"runtimeArgs": [ "-r", "ts-node/register", ],
@@ -27,17 +21,6 @@
 			"args": [ "${workspaceFolder}/toolbox/source/sandbox.ts", ],
 			"env": {
 				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
-			}
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "sample-site - build",
-			"cwd": "${workspaceFolder}/sample-site/build",
-			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/sample-site/build/build.ts", ],
-			"env": {
-				"TS_NODE_PROJECT": "${workspaceFolder}/sample-site/build/tsconfig.json",
 			}
 		},
 	]

@@ -15,10 +15,10 @@ contract Erc777TokensRecipient {
 	/// @notice called when someone attempts to transfer ERC-777 tokens to this address.  If this function were to throw or doesn't exist, then the token transfer would fail.
 	function tokensReceived(address, address, address, uint256, bytes calldata, bytes calldata) external { }
 
-	/// @notice Indicates whether the contract implements the interface `interfaceHash` for the address `addr` or not.
+	/// @notice Indicates whether the contract implements the interface `interfaceHash` for the address `_implementer` or not.
 	/// @param _interfaceHash keccak256 hash of the name of the interface
 	/// @param _implementer Address for which the contract will implement the interface
-	/// @return ERC1820_ACCEPT_MAGIC only if the contract implements `interfaceHash` for the address `addr`.
+	/// @return ERC1820_ACCEPT_MAGIC only if the contract implements `interfaceHash` for the address `_implementer`.
 	function canImplementInterfaceForAddress(bytes32 _interfaceHash, address _implementer) external view returns(bytes32) {
 		// keccak256(abi.encodePacked("ERC777TokensRecipient")) == 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b
 		if (_implementer == address(this) && _interfaceHash == 0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b) {

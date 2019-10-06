@@ -1,74 +1,73 @@
-import { Ledger } from './ledger'
+import fetch from 'node-fetch'
+import { Crypto } from '@peculiar/webcrypto'
+import { JsonRpc } from '@zoltu/ethereum-types'
 import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc'
-import { Address, Bytes32, JsonRpc } from '@zoltu/ethereum-types'
+import { encodeMethod } from '@zoltu/ethereum-abi-encoder'
+import { keccak256 } from '@zoltu/ethereum-crypto'
 import { toEth, toAttoeth } from './utils'
 import { Signer } from './private-key-signer'
 import { FriendlyRecoverableWalletFactory } from './recoverable-wallet-factory';
-import fetch from 'node-fetch'
+import { Erc20 } from './erc20-token'
 
-const chainId = 1
+// necessary so node crypto looks like web crypto, which @zoltu/ethereum-crypto needs
+;import { MnemonicSigner } from './mnemonic-signer'
+(globalThis as any).crypto = new Crypto()
+
 const jsonRpcHttpEndpoint = 'http://localhost:1235/'
 // const jsonRpcHttpEndpoint = 'https://cloudflare-eth.com/'
-const derivationPath = `m/44'/60'/0'/0/0`
 const gasPrice = 1_001_000_000n
 
-export const sweepOwnerEther = async (rpc: JsonRpc, destination: Address): Promise<void> => {
-	rpc = await rpc
-	destination = await destination
+export const sweepOwnerEther = async (rpc: JsonRpc, destination: bigint): Promise<void> => {
 	const signerAddress = await rpc.coinbase()
 	const balanceAttoeth = await rpc.getBalance(signerAddress)
 	const gasPriceAttoeth = await rpc.getGasPrice()
 	const gasAttoeth = 21000n * gasPriceAttoeth
 	const amountInAttoeth = balanceAttoeth - gasAttoeth
-	console.log(`Sweeping ${amountInAttoeth} ETH to ${destination.toString()}`)
+	console.log(`Sweeping ${amountInAttoeth} ETH to ${destination.toString(16)}`)
 	await rpc.sendEth(destination, amountInAttoeth)
-	console.log(`Sent ${amountInAttoeth} ETH to ${destination.toString()}`)
+	console.log(`Sent ${amountInAttoeth} ETH to ${destination.toString(16)}`)
 }
 
-export const sendOwnerEther = async (rpc: JsonRpc, destination: Address, amountInEth: number): Promise<void> => {
-	destination = await destination
-	rpc = await rpc
+export const sendOwnerEther = async (rpc: JsonRpc, destination: bigint, amountInEth: number): Promise<void> => {
 	const signerAddress = await rpc.coinbase()
-	console.log(`Sending ETH from signer (${signerAddress.toString()}) to ${destination.toString()}...`)
+	console.log(`Sending ETH from signer (${signerAddress.toString(16)}) to ${destination.toString(16)}...`)
 	await rpc.sendEth(destination, toAttoeth(amountInEth))
-	console.log(`Sent ${amountInEth} ETH to ${destination.toString()} from owner`)
+	console.log(`Sent ${amountInEth} ETH to ${destination.toString(16)} from owner`)
 }
 
-export const getEtherBalance = async (rpc: JsonRpc, address: Address): Promise<number> => {
-	address = await address
-	rpc = await rpc
+export const getEtherBalance = async (rpc: JsonRpc, address: bigint): Promise<number> => {
 	const attoeth = await rpc.getBalance(address)
 	const eth = toEth(attoeth)
-	console.log(`Balance of ${address.toString()}: ${eth} ETH`)
+	console.log(`Balance of ${address.toString(16)}: ${eth} ETH`)
 	return eth
 }
 
-const createLedgerFetchRpc = async (): Promise<JsonRpc> => {
-	const getGasPrice = async () => gasPrice
-	const ledger = await Ledger.create(derivationPath)
-	return new FetchJsonRpc(jsonRpcHttpEndpoint, fetch, getGasPrice, ledger.getAddress, ledger.signTransaction, chainId)
-}
-createLedgerFetchRpc
-
 const createMemoryWalletFetchRpc = async (): Promise<JsonRpc> => {
 	const getGasPrice = async () => gasPrice
-	const signer = new Signer(Bytes32.fromHexString('fae42052f82bed612a724fec3632f325f377120592c75bb78adfcceae6470c5a'))
-	const chainId = 4173
-	return new FetchJsonRpc(jsonRpcHttpEndpoint, fetch, getGasPrice, async () => signer.address(), async x => signer.sign(x), chainId)
+	const signer = await Signer.create(0xfae42052f82bed612a724fec3632f325f377120592c75bb78adfcceae6470c5an)
+	return new FetchJsonRpc(jsonRpcHttpEndpoint, fetch, getGasPrice, async () => signer.address, signer.sign)
 }
+createMemoryWalletFetchRpc
+
+const createMnemonicWalletFetchRpc = async (): Promise<JsonRpc> => {
+	const getGasPrice = async () => gasPrice
+	const signer = await MnemonicSigner.create('dirt enable exotic tumble female retreat catch devote hurt under place home'.split(' '))
+	return new FetchJsonRpc(jsonRpcHttpEndpoint, fetch, getGasPrice, async () => signer.address, signer.sign)
+}
+createMnemonicWalletFetchRpc
 
 async function doStuff(): Promise<void> {
-	const rpc = await createMemoryWalletFetchRpc()
+	const primaryRpc = await createMemoryWalletFetchRpc()
+	const rpc = await createMnemonicWalletFetchRpc()
+	await primaryRpc.sendEth(await rpc.coinbase(), toAttoeth(1_000_000))
 	// const rpc = await createLedgerFetchRpc()
 	const signerAddress = await rpc.coinbase()
-	console.log(`Signer ETH Balance: ${await rpc.getBalance(signerAddress)}`)
+	console.log(`Signer ETH Balance: ${toEth(await rpc.getBalance(signerAddress))}`)
+	// we can only deploy the dependency contracts (e.g., RecoverableWalletFactory) from an unlocked account, so do one deploy with the unlockedRpc first
+	await FriendlyRecoverableWalletFactory.deploy(primaryRpc)
+	// then deploy with the account we actually want a wallet with
 	const factory = await FriendlyRecoverableWalletFactory.deploy(rpc)
 	const smartWallet = await factory.createWallet()
-	// const signerAddress = await rpc.getSignerAddress()
-
-	// const liquidLongAddress = Address.fromHexString('2FCBaFb681a086103e3d97927d9cA9Af9f1EBD22')
-	// const richAddress = Address.fromHexString('12475B855a2aeac5d07ec882c85F15D4D91af445')
-	// await smartWallet.sendEther(richAddress, 80)
 
 	const ownerBalanceBefore = toEth(await rpc.getBalance(signerAddress))
 	const walletBalanceBefore = await smartWallet.getEthBalance()
@@ -77,11 +76,25 @@ async function doStuff(): Promise<void> {
 	const walletBalanceMiddle = await smartWallet.getEthBalance()
 	console.log(`Owner: ${ownerBalanceBefore} => ${ownerBalanceMiddle}`)
 	console.log(`Wallet: ${walletBalanceBefore} => ${walletBalanceMiddle}`)
-	await smartWallet.sendEther(signerAddress, 0.01)
+	await smartWallet.sendEther(signerAddress, 0.005)
 	const ownerBalanceAfter = toEth(await rpc.getBalance(signerAddress))
 	const walletBalanceAfter = await smartWallet.getEthBalance()
 	console.log(`Owner: ${ownerBalanceMiddle} => ${ownerBalanceAfter}`)
 	console.log(`Wallet: ${walletBalanceMiddle} => ${walletBalanceAfter}`)
+
+	// const tokenAddress = await smartWallet.deploy(Erc20.deploymentBytecode, 'constructor(address)', [await smartWallet.getAddress()])
+	const tokenAddress = await Erc20.ensureDeployed(primaryRpc)
+	await primaryRpc.onChainContractCall({to: tokenAddress, data: await encodeMethod(keccak256.hash, 'transfer(address,uint256)', [await smartWallet.getAddress(), 10n*10n**18n])})
+
+	const walletTokenBalanceCallData = await encodeMethod(keccak256.hash, 'balanceOf(address)', [await smartWallet.getAddress()])
+	const ownerTokenBalanceCallData = await encodeMethod(keccak256.hash, 'balanceOf(address)', [signerAddress])
+	const walletTokenBalanceBefore = (await rpc.offChainContractCall({ to: tokenAddress, data: walletTokenBalanceCallData })).toUnsignedBigint()
+	const ownerTokenBalanceBefore = (await rpc.offChainContractCall({ to: tokenAddress, data: ownerTokenBalanceCallData })).toUnsignedBigint()
+	await smartWallet.sendToken(tokenAddress, signerAddress, 1)
+	const walletTokenBalanceMiddle = (await rpc.offChainContractCall({ to: tokenAddress, data: walletTokenBalanceCallData })).toUnsignedBigint()
+	const ownerTokenBalanceMiddle = (await rpc.offChainContractCall({ to: tokenAddress, data: ownerTokenBalanceCallData })).toUnsignedBigint()
+	console.log(`Wallet TOK: ${toEth(walletTokenBalanceBefore)} => ${toEth(walletTokenBalanceMiddle)}`)
+	console.log(`Owner TOK: ${toEth(ownerTokenBalanceBefore)} => ${toEth(ownerTokenBalanceMiddle)}`)
 }
 
 doStuff().catch(error => {

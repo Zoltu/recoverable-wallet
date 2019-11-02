@@ -2,8 +2,9 @@ import { promises as filesystem } from 'fs'
 import * as path from 'path'
 import { AbiFunction, AbiEvent } from 'ethereum'
 import { CompilerOutput, CompilerInput, compileStandardWrapper, CompilerOutputContractFile, CompilerOutputContract } from 'solc'
-import { generateContractInterfaces } from 'solidity-typescript-generator'
-import { keccak256 } from 'js-sha3'
+import { generateContractInterfaces } from '@zoltu/solidity-typescript-generator'
+import { keccak256 } from '@zoltu/ethereum-crypto'
+import { unsignedBigintToUint8Array } from '@zoltu/bigint-helpers'
 
 export async function ensureDirectoryExists(absoluteDirectoryPath: string) {
 	try {
@@ -84,10 +85,10 @@ async function writeDeploymentParameters(factoryCompilerOutput: CompilerOutputCo
 	const deployerAddress = [0x7a, 0x0d, 0x94, 0xf5, 0x57, 0x92, 0xc4, 0x34, 0xd7, 0x4a, 0x40, 0x88, 0x3c, 0x6e, 0xd8, 0x54, 0x5e, 0x40, 0x6d, 0x12]
 	const salt = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 	const initCode = factoryInitcodeAsString.match(/[0-9a-fA-F]{2}/gi)!.map(byte => Number.parseInt(byte, 16))
-	const initCodeHash = keccak256.array(initCode)
-	const address = keccak256([0xff].concat(deployerAddress).concat(salt).concat(initCodeHash)).substring(24)
+	const initCodeHash = await keccak256.hash(initCode)
+	const address = await keccak256.hash([0xff, ...deployerAddress, ...salt, ...unsignedBigintToUint8Array(initCodeHash, 256)]) & 0xffffffffffffffffffffffffffffffffffffffffn
 	const filePath = path.join(__dirname, '..', 'source', 'deployment-parameters.ts')
-	const fileContents = `export const factoryAddress = '0x${address}'
+	const fileContents = `export const factoryAddress = 0x${address.toString(16)}n
 export const factoryInitcode = '0x${factoryInitcodeAsString}'
 export const factoryBytecode = '0x${factoryBytecodeAsString}'`
 	await filesystem.writeFile(filePath, fileContents, { encoding: 'utf8', flag: 'w' })

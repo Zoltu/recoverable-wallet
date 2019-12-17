@@ -37,7 +37,7 @@ First, setup a recoverable wallet with whatever risk/loss protection you desire 
 
 The core of this project is an Ethereum smart contract that allows you to proxy calls through it, or add/remove recovery addresess, initiate recovery, and cancel recovery.  In addition, there ~~is~~ will be a UI that allows you to easily interact with the smart contract.  Finally, the wallet ~~is~~ will be integrated into popular wallets like MetaMask.
 
-The contract is split into two pieces.  One is a factor that lives at a well defined address on all blockchains.  This factory makes it easy to instantiate a new wallet and monitor new wallet creation (since an event is emitted every time a wallet is created by the factory).  The wallet contract itself only has a small number of public functions and contains documentation comments on them to make it easy to interact with them.
+The contract is split into two pieces.  One is a factory that lives at a well defined address on all blockchains.  This factory makes it easy to instantiate a new wallet and monitor new wallet creation (since an event is emitted every time a wallet is created by the factory).  The wallet contract itself only has a small number of public functions and contains documentation comments on them to make it easy to interact with them.
 
 ----
 

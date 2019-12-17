@@ -19,7 +19,7 @@ Attack/Loss scenarios:
 2. You lose the Ledger Nano X and when you try to recover with the Ledger Nano S you find that it has broken: Recover with the mnemonic.
 3. Someone steals the Ledger Nano X: No big deal, they get 3 tries to unlock it before it self-wipes and you can recover access to your account.
 4. Someone steals the Ledger Nano X and your mnemonic: As long as you _notice_ the theft before the recovery delay is over you can recover using the Ledger Nano S.
-5. Someone steals the mnemonic: As long as you _notice_ that the mnemonic has been stolen you can recoke its access and create a new mnemonic to replace it.
+5. Someone steals the mnemonic: As long as you _notice_ that the mnemonic has been stolen you can revoke its access and create a new mnemonic to replace it.
 
 In order for someone to successfully compromise your account, they would need to steal your recovery phrase at the same time as disabling/destroying/stealing your hardware wallets.  This is _much_ harder than stealing a single mnemonic, especially if at least one of the hardware wallets is secured off-site.
 

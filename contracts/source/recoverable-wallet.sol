@@ -1,4 +1,5 @@
 pragma solidity 0.6.2;
+pragma experimental ABIEncoderV2;
 
 /// @notice https://eips.ethereum.org/EIPS/eip-1820
 interface Erc1820Registry {
@@ -194,6 +195,14 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 
 	constructor(address _initialOwner) Ownable(_initialOwner) public {
 		recoveryDelaysInDays.initialize();
+	}
+
+	function listRecoverers() external view returns (EnumerableMap.Entry[] memory) {
+		return recoveryDelaysInDays.enumerate();
+	}
+
+	function getRecoveryDelayInDays(address recoverer) external view returns (uint16) {
+		return recoveryDelaysInDays.get(recoverer);
 	}
 
 	/// @notice accept ETH transfers into this contract

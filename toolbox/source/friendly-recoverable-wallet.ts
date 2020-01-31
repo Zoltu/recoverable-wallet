@@ -47,7 +47,7 @@ export class FriendlyRecoverableWallet {
 		if (recoveryAddressAddedEvent === undefined) throw new Error(`Expected RecoveryAddressAdded event.`)
 		if (recoveryAddressAddedEvent.parameters.newRecoverer !== newRecoveryAddress) throw new Error(`RecoveryAddressAdded event indicates that ${await addressToChecksummedString(recoveryAddressAddedEvent.parameters.newRecoverer)} was added but expected ${await addressToChecksummedString(newRecoveryAddress)} to be added.`)
 		if (recoveryAddressAddedEvent.parameters.recoveryDelayInDays !== recoveryDelayInDays) throw new Error(`Expected recovery delay to be ${recoveryDelayInDays} days but event says it is ${recoveryAddressAddedEvent.parameters.recoveryDelayInDays}`)
-		const onChainRecoveryDelay = await this.wallet.recoveryDelaysInDays_(newRecoveryAddress)
+		const onChainRecoveryDelay = await this.wallet.getRecoveryDelayInDays_(newRecoveryAddress)
 		if (onChainRecoveryDelay !== recoveryDelayInDays) throw new Error(`New recoverer has ${onChainRecoveryDelay} days delay but expected ${recoveryDelayInDays}.`)
 	}
 
@@ -55,7 +55,7 @@ export class FriendlyRecoverableWallet {
 		const events = await this.wallet.removeRecoveryAddress(oldRecoveryAddress)
 		const recoveryAddressRemovedEvent = events.find(x => x.name === 'RecoveryAddressRemoved') as RecoverableWallet.RecoveryAddressRemoved | undefined
 		if (recoveryAddressRemovedEvent === undefined) throw new Error(`Expected RecoveryAddressRemoved event.`)
-		const onChainRecoveryDelay = await this.wallet.recoveryDelaysInDays_(oldRecoveryAddress)
+		const onChainRecoveryDelay = await this.wallet.getRecoveryDelayInDays_(oldRecoveryAddress)
 		if (onChainRecoveryDelay !== 0n) throw new Error(`Removed recoverer still has a recovery delay of ${onChainRecoveryDelay} days set!`)
 	}
 

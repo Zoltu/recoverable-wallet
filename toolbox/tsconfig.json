@@ -13,6 +13,10 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"lib": [ "es2018", "dom" ],
+		"typeRoots": [
+			"./node_modules/@types",
+			"./source/typings",
+		]
 	},
 	"include": [
 		"source/**/*.ts",

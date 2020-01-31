@@ -23,5 +23,16 @@
 				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
 			}
 		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "toolbox - script",
+			"cwd": "${workspaceFolder}/toolbox/",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/toolbox/source/scripts/send-tokens.ts", ],
+			"env": {
+				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
+			}
+		},
 	]
 }

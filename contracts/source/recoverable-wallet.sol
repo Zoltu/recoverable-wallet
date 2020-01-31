@@ -170,7 +170,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 		address _oldOwner = owner;
 		owner = activeRecoveryAddress;
 		resetRecovery();
-		emit RecoveryFinished(pendingOwner);
+		emit RecoveryFinished(owner);
 		emit OwnershipTransferStarted(_oldOwner, owner);
 		emit OwnershipTransferFinished(_oldOwner, owner);
 	}

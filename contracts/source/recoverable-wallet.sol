@@ -1,4 +1,4 @@
-pragma solidity 0.5.8;
+pragma solidity 0.6.2;
 
 /// @notice https://eips.ethereum.org/EIPS/eip-1820
 interface Erc1820Registry {
@@ -110,7 +110,7 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	constructor(address _initialOwner) Ownable(_initialOwner) public { }
 
 	/// @notice accept ETH transfers into this contract
-	function () external payable { }
+	receive () external payable { }
 
 	/// @notice add a new recovery address to the wallet with the specified number of day delay
 	/// @param _newRecoveryAddress the address to be added

@@ -1,7 +1,7 @@
 {
 	"name": "@zoltu/recoverable-wallet-library",
 	"description": "TypeScript files for interfacing with the RecoverableWallet contracts.",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"license": "Unlicense",
 	"repository": {
 		"type": "git",

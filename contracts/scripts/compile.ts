@@ -15,7 +15,7 @@ export async function ensureDirectoryExists(absoluteDirectoryPath: string) {
 	}
 }
 
-async function compileContracts(): Promise<CompilerOutput> {
+async function compileContracts(): Promise<[CompilerInput, CompilerOutput]> {
 	const solidityFilePath = path.join(__dirname, '..', 'source', 'recoverable-wallet.sol')
 	const soliditySourceCode = await filesystem.readFile(solidityFilePath, 'utf8')
 	const compilerInput: CompilerInput = {
@@ -27,7 +27,7 @@ async function compileContracts(): Promise<CompilerOutput> {
 			},
 			outputSelection: {
 				"*": {
-					"*": [ "abi", "evm.bytecode.object", "evm.deployedBytecode.object", "evm.gasEstimates" ]
+					'*': [ 'abi', 'metadata', 'evm.bytecode.object', 'evm.bytecode.sourceMap', 'evm.deployedBytecode.object', 'evm.gasEstimates' ]
 				}
 			}
 		},
@@ -53,7 +53,21 @@ async function compileContracts(): Promise<CompilerOutput> {
 		}
 	}
 
-	return compilerOutput
+	return [compilerInput, compilerOutput]
+}
+
+async function writeCompilerInput(input: CompilerInput) {
+	await ensureDirectoryExists(path.join(__dirname, '..', '/output/'))
+	const filePath = path.join(__dirname, '..', 'output', 'recoverable-wallet-input.json')
+	const fileContents = JSON.stringify(input, undefined, '\t')
+	return await filesystem.writeFile(filePath, fileContents, { encoding: 'utf8', flag: 'w' })
+}
+
+async function writeCompilerOutput(output: CompilerOutput) {
+	await ensureDirectoryExists(path.join(__dirname, '..', '/output/'))
+	const filePath = path.join(__dirname, '..', 'output', 'recoverable-wallet-output.json')
+	const fileContents = JSON.stringify(output, undefined, '\t')
+	return await filesystem.writeFile(filePath, fileContents, { encoding: 'utf8', flag: 'w' })
 }
 
 async function writeJson(abi: (AbiFunction | AbiEvent)[]) {
@@ -95,9 +109,11 @@ export const factoryBytecode = '0x${factoryBytecodeAsString}'`
 }
 
 async function doStuff() {
-	const compilerOutput = await compileContracts()
+	const [compilerInput, compilerOutput] = await compileContracts()
 	const contracts = compilerOutput.contracts['recoverable-wallet.sol']
 	const factory = contracts['RecoverableWalletFactory']
+	await writeCompilerInput(compilerInput)
+	await writeCompilerOutput(compilerOutput)
 	await writeJson(contracts.RecoverableWallet.abi)
 	await writeGeneratedInterface(compilerOutput)
 	await writeBytecode(contracts)

@@ -38,6 +38,8 @@ export class FriendlyRecoverableWalletFactory {
 		return new FriendlyRecoverableWalletFactory(rpc, factory)
 	}
 
+	public get address() { return this.factory.address }
+
 	public readonly createWallet = async (): Promise<FriendlyRecoverableWallet> => {
 		const events = await this.factory.createWallet()
 		const walletCreatedEvent = events.find(x => x.name === 'WalletCreated') as RecoverableWalletFactory.WalletCreated

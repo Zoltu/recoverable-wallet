@@ -1,7 +1,7 @@
 import { promises as filesystem } from 'fs'
 import * as path from 'path'
 import { AbiFunction, AbiEvent } from 'ethereum'
-import { CompilerOutput, CompilerInput, compileStandardWrapper, CompilerOutputContractFile, CompilerOutputContract } from 'solc'
+import { CompilerOutput, CompilerInput, compile, CompilerOutputContractFile, CompilerOutputContract } from 'solc'
 import { generateContractInterfaces } from '@zoltu/solidity-typescript-generator'
 import { keccak256 } from '@zoltu/ethereum-crypto'
 import { unsignedBigintToUint8Array } from '@zoltu/bigint-helpers'
@@ -38,7 +38,7 @@ async function compileContracts(): Promise<[CompilerInput, CompilerOutput]> {
 		}
 	}
 	const compilerInputJson = JSON.stringify(compilerInput)
-	const compilerOutputJson = compileStandardWrapper(compilerInputJson)
+	const compilerOutputJson = compile(compilerInputJson)
 	const compilerOutput = JSON.parse(compilerOutputJson) as CompilerOutput
 	const errors = compilerOutput.errors
 	if (errors) {

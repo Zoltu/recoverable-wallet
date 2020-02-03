@@ -34,6 +34,21 @@ export class FriendlyRecoverableWallet {
 
 	public readonly getEthBalance = async (): Promise<number> => toEth(await this.getAttoethBalance())
 
+	public readonly listRecoverers = async (): Promise<{address: bigint, delay: bigint}[]> => {
+		const results = await this.wallet.listRecoverers_()
+		return results.map(x => ({ address: x.key, delay: x.value }))
+	}
+
+	public readonly getRecoveryDelayFor = async (address: bigint) => {
+		return await this.wallet.getRecoveryDelayInDays_(address)
+	}
+
+	public readonly activeRecoveryDetails = async () => {
+		const address = await this.wallet.activeRecoveryAddress_()
+		const time = await this.wallet.activeRecoveryEndTime_()
+		return { address, time }
+	}
+
 	public readonly sendEther = async (destination: bigint, amountInEth: number | bigint): Promise<readonly Event[]> => await this.wallet.execute(destination, toAttoeth(amountInEth), new Bytes())
 
 	public readonly sendToken = async (tokenAddress: bigint, destination: bigint, attotoken: bigint): Promise<readonly Event[]> => {
@@ -47,7 +62,7 @@ export class FriendlyRecoverableWallet {
 		if (recoveryAddressAddedEvent === undefined) throw new Error(`Expected RecoveryAddressAdded event.`)
 		if (recoveryAddressAddedEvent.parameters.newRecoverer !== newRecoveryAddress) throw new Error(`RecoveryAddressAdded event indicates that ${await addressToChecksummedString(recoveryAddressAddedEvent.parameters.newRecoverer)} was added but expected ${await addressToChecksummedString(newRecoveryAddress)} to be added.`)
 		if (recoveryAddressAddedEvent.parameters.recoveryDelayInDays !== recoveryDelayInDays) throw new Error(`Expected recovery delay to be ${recoveryDelayInDays} days but event says it is ${recoveryAddressAddedEvent.parameters.recoveryDelayInDays}`)
-		const onChainRecoveryDelay = await this.wallet.recoveryDelaysInDays_(newRecoveryAddress)
+		const onChainRecoveryDelay = await this.wallet.getRecoveryDelayInDays_(newRecoveryAddress)
 		if (onChainRecoveryDelay !== recoveryDelayInDays) throw new Error(`New recoverer has ${onChainRecoveryDelay} days delay but expected ${recoveryDelayInDays}.`)
 	}
 
@@ -55,8 +70,7 @@ export class FriendlyRecoverableWallet {
 		const events = await this.wallet.removeRecoveryAddress(oldRecoveryAddress)
 		const recoveryAddressRemovedEvent = events.find(x => x.name === 'RecoveryAddressRemoved') as RecoverableWallet.RecoveryAddressRemoved | undefined
 		if (recoveryAddressRemovedEvent === undefined) throw new Error(`Expected RecoveryAddressRemoved event.`)
-		const onChainRecoveryDelay = await this.wallet.recoveryDelaysInDays_(oldRecoveryAddress)
-		if (onChainRecoveryDelay !== 0n) throw new Error(`Removed recoverer still has a recovery delay of ${onChainRecoveryDelay} days set!`)
+		if ((await this.wallet.listRecoverers_()).find(x => x.key === oldRecoveryAddress) !== undefined) throw new Error(`Removed recoverer is still in the recoverer set!`)
 	}
 
 	public readonly startRecovery = async (): Promise<bigint> => {
@@ -79,24 +93,8 @@ export class FriendlyRecoverableWallet {
 		const events = await this.wallet.finishRecovery()
 		const recoveryFinishedEvent = events.find(x => x.name === 'RecoveryFinished') as RecoverableWallet.RecoveryFinished | undefined
 		if (recoveryFinishedEvent === undefined) throw new Error(`Expected RecoveryFinished event.`)
-		if (recoveryFinishedEvent.parameters.newPendingOwner !== await this.wallet.owner_()) throw new Error(`RecoveryFinished event reports new owner is ${await addressToChecksummedString(recoveryFinishedEvent.parameters.newPendingOwner)} which differs from actual current owner ${await addressToChecksummedString(await this.wallet.owner_())}.`)
-		return recoveryFinishedEvent.parameters.newPendingOwner
-	}
-
-	public readonly startOwnershipTransfer = async (pendingOwner: bigint): Promise<void> => {
-		const events = await this.wallet.startOwnershipTransfer(pendingOwner)
-		const event = events.find(x => x.name === 'OwnershipTransferStarted') as RecoverableWallet.OwnershipTransferStarted | undefined
-		if (event === undefined) throw new Error(`Expected OwnershipTransferStarted event.`)
-		if (event.parameters.pendingOwner !== pendingOwner) throw new Error(`Event indicates pending owner was set to ${await addressToChecksummedString(event.parameters.pendingOwner)} but expected it to be set to ${await addressToChecksummedString(pendingOwner)}`)
-		const onChainPendingOwner = await this.wallet.pendingOwner_()
-		if (onChainPendingOwner !== pendingOwner) throw new Error(`On chain pending owner set to ${await addressToChecksummedString(onChainPendingOwner)} instead of the expected ${await addressToChecksummedString(pendingOwner)}`)
-	}
-
-	public readonly acceptOwnership = async (): Promise<void> => {
-		const events = await this.wallet.acceptOwnership()
-		const event = events.find(x => x.name === 'OwnershipTransferFinished') as RecoverableWallet.OwnershipTransferFinished | undefined
-		if (event === undefined) throw new Error(`Expected OwnershipTransferFinished event.`)
-		if (event.parameters.newOwner !== await this.getSigner()) throw new Error(`Expected new owner to be ${await this.getSignerString()} but it was ${await addressToChecksummedString(event.parameters.newOwner)}`)
+		if (recoveryFinishedEvent.parameters.newOwner !== await this.wallet.owner_()) throw new Error(`RecoveryFinished event reports new owner is ${await addressToChecksummedString(recoveryFinishedEvent.parameters.newOwner)} which differs from actual current owner ${await addressToChecksummedString(await this.wallet.owner_())}.`)
+		return recoveryFinishedEvent.parameters.newOwner
 	}
 
 	public readonly callContract = async (contractAddress: bigint, value: bigint, methodSignature: string, ...parameters: EncodableArray): Promise<readonly Event[]> => {

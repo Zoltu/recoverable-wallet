@@ -1,10 +1,10 @@
 import fetch from 'node-fetch'
-import { getLedgerRecoverableWallet } from '../recoverable-wallet-factories';
-import { derivationPath, jsonRpcHttpEndpoint, gasPrice, walletAddress } from './_constants';
+import { jsonRpcHttpEndpoint } from './_constants';
 import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc';
 import { encodeMethod, decodeParameters } from '@zoltu/ethereum-abi-encoder';
 import { keccak256 } from '@zoltu/ethereum-crypto';
 import { Bytes } from '@zoltu/ethereum-types';
+import { getWallet } from './_globals';
 
 const tokenAddress = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48n
 const symbol = 'USDC'
@@ -18,7 +18,7 @@ async function main() {
 	const onChainSymbol = new TextDecoder().decode((decodeParameters([{ name: 'symbol', type: 'bytes' }], onChainSymbolEncoded) as {symbol:Bytes}).symbol)
 	if (onChainSymbol !== symbol) throw new Error(`Symbols don't match: ${onChainSymbol}`)
 
-	const wallet = await getLedgerRecoverableWallet(jsonRpcHttpEndpoint, gasPrice, walletAddress, derivationPath)
+	const wallet = await getWallet()
 	await wallet.sendToken(tokenAddress, destination, attoamount)
 }
 

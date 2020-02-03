@@ -1,4 +1,5 @@
-pragma solidity 0.5.8;
+pragma solidity 0.6.2;
+pragma experimental ABIEncoderV2;
 
 /// @notice https://eips.ethereum.org/EIPS/eip-1820
 interface Erc1820Registry {
@@ -30,70 +31,115 @@ contract Erc777TokensRecipient {
 	}
 }
 
-/// @notice An Ownable contract is one that has a single address that has elevated control over the contract's operations.  Ownership can be transferred between users as a two-step process, one to initiate the transfer and two to receive the transfer.  This two-step process ensures that ownership cannot accidentally be given to an address that cannot operate the contract.
-contract Ownable {
-	event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
-	event OwnershipTransferCancelled(address indexed owner, address indexed pendingOwner);
-	event OwnershipTransferFinished(address indexed oldOwner, address indexed newOwner);
+/**
+ * @dev Library for managing map of recoverer.
+ *
+ * Original cribbed from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/1e0f07751ea0badce1f51bc23578b5b1ddb4b464/contracts/utils/EnumerableSet.sol, but heavily modified.
+ */
+library EnumerableMap {
+	struct Entry {
+		address key;
+		uint16 value;
+	}
+
+	struct Map {
+		mapping (address => uint256) index;
+		Entry[] entries;
+	}
+
+	function initialize(Map storage map) internal {
+		// we initialize it with a placeholder entry in the first position because we treat the array as 1-indexed since 0 is a special index (means no entry in the index)
+		map.entries.push();
+	}
+
+	function contains(Map storage map, address key) internal view returns (bool) {
+		return map.index[key] != 0;
+	}
+
+	function addOrUpdate(Map storage map, address key, uint16 value) internal {
+		uint256 index = map.index[key];
+		if (index == 0) {
+			// create new entry
+			Entry memory entry = Entry({ key: key, value: value });
+			map.entries.push(entry);
+			map.index[key] = map.entries.length - 1;
+		} else {
+			// update existing entry
+			map.entries[index].value = value;
+		}
+
+		require(map.entries[map.index[key]].key == key, "Key at inserted location does not match inserted key.");
+		require(map.entries[map.index[key]].value == value, "Value at inserted location does not match inserted value.");
+	}
+
+	function remove(Map storage map, address key) internal {
+		// get the index into entries array that this entry lives at
+		uint256 index = map.index[key];
+
+		// if this key doesn't exist in the index, then we have nothing to do
+		if (index == 0) return;
+
+		// if the entry we are removing isn't the last, overwrite it with the last entry
+		uint256 lastIndex = map.entries.length - 1;
+		if (index != lastIndex) {
+			Entry storage lastEntry = map.entries[lastIndex];
+			map.entries[index] = lastEntry;
+			map.index[lastEntry.key] = index;
+		}
+
+		// delete the last entry (if the item we are removing isn't last, it will have been overwritten with the last entry inside the conditional above)
+		map.entries.pop();
+
+		// delete the index pointer
+		delete map.index[key];
+
+		require(map.index[key] == 0, "Removed key still exists in the index.");
+		require(map.entries[index].key != key, "Removed key still exists in the array at original index.");
+	}
+
+	function get(Map storage map, address key) internal view returns (uint16) {
+		uint256 index = map.index[key];
+		require(index != 0, "Provided key was not in the map.");
+		return map.entries[index].value;
+	}
+
+	// this function is effectively map.entries.slice(1:), but that doesn't work with storage arrays in this version of solc so we have to do it by hand
+	function enumerate(Map storage map) internal view returns (Entry[] memory) {
+		// output array is one shorter because we use a 1-indexed array
+		Entry[] memory output = new Entry[](map.entries.length - 1);
+
+		// first element in the array is just a placeholder (0,0), so we copy from element 1 to end
+		for (uint256 i = 1; i < map.entries.length; ++i) {
+			output[i - 1] = map.entries[i];
+		}
+		return output;
+	}
+}
+
+/// @notice a smart wallet that is secured against loss of keys by way of backup keys that can be used to recover access with a time delay.
+contract RecoverableWallet is Erc777TokensRecipient {
+	using EnumerableMap for EnumerableMap.Map;
+
+	event RecoveryAddressAdded(address indexed newRecoverer, uint16 recoveryDelayInDays);
+	event RecoveryAddressRemoved(address indexed oldRecoverer);
+	event RecoveryStarted(address indexed newOwner);
+	event RecoveryCancelled(address indexed oldRecoverer);
+	event RecoveryFinished(address indexed oldOwner, address indexed newOwner);
 
 	address public owner;
-	address public pendingOwner;
-
-	constructor(address _owner) public {
-		require(_owner != address(0), "Contract must have an owner.");
-		owner = _owner;
-	}
+	/// @notice a collection of accounts that are able to recover control of this wallet, mapped to the number of days it takes for each to complete a recovery.
+	/// @dev the recovery days are also used as a recovery priority, so a recovery address with a lower number of days has a higher recovery priority and can override a lower-priority recovery in progress.
+	EnumerableMap.Map private recoveryDelaysInDays;
+	/// @notice the address that is currently trying to recover access to the contract.
+	address public activeRecoveryAddress;
+	/// @notice the time at which the activeRecoveryAddress can take ownership of the contract.
+	uint256 public activeRecoveryEndTime = uint256(-1);
 
 	/// @notice a function modifier that ensures the modified function can only be called by the owner of the contract.
 	modifier onlyOwner() {
 		require(msg.sender == owner, "Only the owner may call this method.");
 		_;
 	}
-
-	/// @notice starts the transfer of ownership to a new owner.
-	/// @param _pendingOwner the address to which ownership should be transferred.
-	function startOwnershipTransfer(address _pendingOwner) external onlyOwner {
-		require(_pendingOwner != address(0), "Contract must have an owner.");
-		// we want to ensure that we get a cancelled or finished event for every ownership transfer, so if a transfer is in progres we first cancel it
-		if (pendingOwner != address(0)) {
-			cancelOwnershipTransfer();
-		}
-		pendingOwner = _pendingOwner;
-		emit OwnershipTransferStarted(owner, pendingOwner);
-	}
-
-	/// @notice cancel an in progress ownership transfer.
-	/// @dev cancellation should not be depended on to cancel a transfer to a malicious address.  it's intended purpose is only to cancel transfer to an address that is unable or unwilling to accept the transfer
-	function cancelOwnershipTransfer() public onlyOwner {
-		require(pendingOwner != address(0), "There is no pending transfer to be cancelled.");
-		address _pendingOwner = pendingOwner;
-		pendingOwner = address(0);
-		emit OwnershipTransferCancelled(owner, _pendingOwner);
-	}
-
-	/// @notice called by the pending owner as part of the two-step ownership transfer process to accept ownership of the contract.
-	function acceptOwnership() external {
-		require(msg.sender == pendingOwner, "Only the pending owner can call this method.");
-		address _oldOwner = owner;
-		owner = pendingOwner;
-		pendingOwner = address(0);
-		emit OwnershipTransferFinished(_oldOwner, owner);
-	}
-}
-
-/// @notice a smart wallet that is secured against loss of keys by way of backup keys that can be used to recover access with a time delay.
-contract RecoverableWallet is Ownable, Erc777TokensRecipient {
-	event RecoveryAddressAdded(address indexed newRecoverer, uint16 recoveryDelayInDays);
-	event RecoveryAddressRemoved(address indexed oldRecoverer);
-	event RecoveryStarted(address indexed newOwner);
-	event RecoveryCancelled(address indexed oldRecoverer);
-	event RecoveryFinished(address indexed newPendingOwner);
-
-	/// @notice a collection of accounts that are able to recover control of this wallet, mapped to the number of days it takes for each to complete a recovery.
-	/// @dev the recovery days are also used as a recovery priority, so a recovery address with a lower number of days has a higher recovery priority and can override a lower-priority recovery in progress.
-	mapping(address => uint16) public recoveryDelaysInDays;
-	address public activeRecoveryAddress;
-	uint256 public activeRecoveryEndTime = uint256(-1);
 
 	/// @notice the modified function can only be called when the wallet is undergoing recovery.
 	modifier onlyDuringRecovery() {
@@ -107,18 +153,29 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 		_;
 	}
 
-	constructor(address _initialOwner) Ownable(_initialOwner) public { }
+	constructor(address _initialOwner) public {
+		require(_initialOwner != address(0), "Wallet must have an initial owner.");
+		owner = _initialOwner;
+		recoveryDelaysInDays.initialize();
+	}
+
+	function listRecoverers() external view returns (EnumerableMap.Entry[] memory) {
+		return recoveryDelaysInDays.enumerate();
+	}
+
+	function getRecoveryDelayInDays(address recoverer) external view returns (uint16) {
+		return recoveryDelaysInDays.get(recoverer);
+	}
 
 	/// @notice accept ETH transfers into this contract
-	function () external payable { }
+	receive () external payable { }
 
 	/// @notice add a new recovery address to the wallet with the specified number of day delay
 	/// @param _newRecoveryAddress the address to be added
 	/// @param _recoveryDelayInDays the number of days delay between when `_newRecoveryAddress` can initiate a recovery and when it can complete the recovery
 	function addRecoveryAddress(address _newRecoveryAddress, uint16 _recoveryDelayInDays) external onlyOwner onlyOutsideRecovery {
 		require(_newRecoveryAddress != address(0), "Recovery address must be supplied.");
-		require(_recoveryDelayInDays > 0, "Recovery delay must be at least 1 day.");
-		recoveryDelaysInDays[_newRecoveryAddress] = _recoveryDelayInDays;
+		recoveryDelaysInDays.addOrUpdate(_newRecoveryAddress, _recoveryDelayInDays);
 		emit RecoveryAddressAdded(_newRecoveryAddress, _recoveryDelayInDays);
 	}
 
@@ -126,20 +183,20 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 	/// @param _oldRecoveryAddress the address to remove from the recovery addresses collection
 	function removeRecoveryAddress(address _oldRecoveryAddress) public onlyOwner onlyOutsideRecovery {
 		require(_oldRecoveryAddress != address(0), "Recovery address must be supplied.");
-		recoveryDelaysInDays[_oldRecoveryAddress] = 0;
+		recoveryDelaysInDays.remove(_oldRecoveryAddress);
 		emit RecoveryAddressRemoved(_oldRecoveryAddress);
 	}
 
 	/// @notice starts the recovery process.  must be called by a previously registered recovery address.  recovery will complete in a number of days dependent on the address that initiated the recovery
 	function startRecovery() external {
-		uint16 _proposedRecoveryDelayInDays = recoveryDelaysInDays[msg.sender];
-		require(_proposedRecoveryDelayInDays != 0, "Only designated recovery addresseses can initiate the recovery process.");
+		require(recoveryDelaysInDays.contains(msg.sender), "Caller is not registered as a recoverer for this wallet.");
+		uint16 _proposedRecoveryDelayInDays = recoveryDelaysInDays.get(msg.sender);
 
 		bool _inRecovery = activeRecoveryAddress != address(0);
 		if (_inRecovery) {
 			// NOTE: the delay for a particular recovery address cannot be changed during recovery nor can addresses be removed during recovery, so we can rely on this being != 0
-			uint16 _activeRecoveryDelayInDays = recoveryDelaysInDays[activeRecoveryAddress];
-			require(_proposedRecoveryDelayInDays < _activeRecoveryDelayInDays, "Recovery is already under way and new recovery doesn't have a higher priority.");
+			uint16 _activeRecoveryDelayInDays = recoveryDelaysInDays.get(activeRecoveryAddress);
+			require(_proposedRecoveryDelayInDays < _activeRecoveryDelayInDays, "Recovery is already under way and new recoverer doesn't have a higher priority.");
 			emit RecoveryCancelled(activeRecoveryAddress);
 		}
 
@@ -165,14 +222,12 @@ contract RecoverableWallet is Ownable, Erc777TokensRecipient {
 
 	/// @notice finishes the recovery process after the necessary delay has elapsed.  callable by anyone in case the keys controlling the active recovery address have been lost, since once this is called a new recovery (with a potentially lower recovery priority) can begin.
 	function finishRecovery() external onlyDuringRecovery {
-		require(block.timestamp > activeRecoveryEndTime, "You must wait until the recovery delay is over before finishing the recovery.");
+		require(block.timestamp >= activeRecoveryEndTime, "You must wait until the recovery delay is over before finishing the recovery.");
 
 		address _oldOwner = owner;
 		owner = activeRecoveryAddress;
 		resetRecovery();
-		emit RecoveryFinished(pendingOwner);
-		emit OwnershipTransferStarted(_oldOwner, owner);
-		emit OwnershipTransferFinished(_oldOwner, owner);
+		emit RecoveryFinished(_oldOwner, owner);
 	}
 
 	/// @notice deploy a contract from this contract.

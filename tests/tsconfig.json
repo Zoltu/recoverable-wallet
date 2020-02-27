@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"outDir": "output",
+		"rootDir": "source",
+		"strict": true,
+		"noEmit": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"lib": [ "es2018", "dom" ],
+		"typeRoots": [
+			"./node_modules/@types",
+			"./source/typings",
+		]
+	},
+	"include": [
+		"source/**/*.ts",
+	]
+}

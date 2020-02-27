@@ -17,7 +17,8 @@ async function main() {
 		console.log(`\x1b[32mRecoverer\x1b[0m: \x1b[35mAddress\x1b[0m: ${await addressToChecksummedString(recoverer.address)}; \x1b[35mDelay\x1b[0m: ${recoverer.delay}`)
 	}
 
-	console.log(`\x1b[32mETH\x1b[0m: ${attoString(await wallet.getAttoethBalance())}`)
+	console.log(`\x1b[32mWallet ETH\x1b[0m: ${attoString(await wallet.getAttoethBalance())}`)
+	console.log(`\x1b[32mOwner ETH\x1b[0m: ${attoString(await wallet.rpc.getBalance(await wallet.getOwner()))}`)
 }
 
 if (require.main === module) {

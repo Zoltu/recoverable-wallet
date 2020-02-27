@@ -8,7 +8,7 @@ import { addressToChecksummedString } from '@zoltu/ethereum-crypto/output-node/e
 
 export class FriendlyRecoverableWallet {
 	public constructor(
-		private readonly rpc: JsonRpc,
+		public readonly rpc: JsonRpc,
 		private readonly wallet: RecoverableWallet
 	) { }
 

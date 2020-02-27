@@ -34,5 +34,15 @@
 				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
 			}
 		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "tests",
+			"cwd": "${workspaceFolder}/tests",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/tests/source/index.ts", ],
+			"env": { "TS_NODE_PROJECT": "${workspaceFolder}/tests/tsconfig.json" },
+			"outputCapture": "std",
+		},
 	]
 }

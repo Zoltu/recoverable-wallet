@@ -1,7 +1,7 @@
 import { JsonRpc } from '@zoltu/ethereum-types'
-import { addressToChecksummedString } from '@zoltu/ethereum-crypto/output-node/ethereum'
 import { toEth, toAttoeth } from '../utils'
-import { createMemoryRpc } from './_globals'
+import { createRpc } from './_globals'
+import { walletAddress } from './_constants'
 
 export const sweepOwnerEther = async (rpc: JsonRpc, destination: bigint): Promise<void> => {
 	const signerAddress = await rpc.coinbase()
@@ -31,7 +31,8 @@ export const getEtherBalance = async (rpc: JsonRpc, address: bigint): Promise<nu
 }
 
 async function main(): Promise<void> {
-	console.log(await addressToChecksummedString(await (await createMemoryRpc()).addressProvider()))
+	const rpc = await createRpc()
+	await sendOwnerEther(rpc, walletAddress, 1)
 }
 
 if (require.main === module) {

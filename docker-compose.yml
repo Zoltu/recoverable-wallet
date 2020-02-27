@@ -17,3 +17,11 @@ services:
         mode: "host"
     environment:
       GETH_VERBOSITY: "3"
+
+  nethermind:
+    image: "keydonix/nethermind-spaceneth"
+    ports:
+      - target: "8545"
+        published: "1237"
+        protocol: "tcp"
+        mode: "host"

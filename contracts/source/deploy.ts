@@ -71,7 +71,7 @@ export class Deployer {
 	public readonly ensureFactoryDeployed = async (): Promise<bigint> => {
 		await this.ensureProxyDeployerDeployed()
 		await this.ensureErc1820Deployed()
-		const deployedBytecode = await this.rpc.getCode(`0x${factoryAddress.toString(16)}`)
+		const deployedBytecode = await this.rpc.getCode(`0x${factoryAddress.toString(16).padStart(40,'0')}`)
 		if (deployedBytecode === factoryBytecode) return factoryAddress
 		await this.rpc.sendTransaction({ to: '0x7a0d94f55792c434d74a40883c6ed8545e406d12', data: factoryInitcode })
 		return factoryAddress

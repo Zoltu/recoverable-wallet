@@ -1,7 +1,7 @@
 {
 	"name": "@zoltu/recoverable-wallet-library",
 	"description": "TypeScript files for interfacing with the RecoverableWallet contracts.",
-	"version": "1.1.0",
+	"version": "2.0.0",
 	"license": "Unlicense",
 	"repository": {
 		"type": "git",
@@ -9,13 +9,13 @@
 	},
 	"main": "output/index.js",
 	"dependencies": {
-		"@zoltu/ethereum-abi-encoder": "3.2.2"
+		"@zoltu/ethereum-abi-encoder": "4.0.0"
 	},
 	"devDependencies": {
 		"@types/node": "12.12.14",
 		"@zoltu/bigint-helpers": "2.0.1",
 		"@zoltu/ethereum-crypto": "2.1.1",
-		"@zoltu/solidity-typescript-generator": "3.0.2",
+		"@zoltu/solidity-typescript-generator": "3.1.0",
 		"solc": "0.6.2",
 		"ts-node": "8.5.4",
 		"typescript": "3.7.3"

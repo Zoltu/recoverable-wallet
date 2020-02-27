@@ -56,7 +56,7 @@ library EnumerableMap {
 		return map.index[key] != 0;
 	}
 
-	function addOrUpdate(Map storage map, address key, uint16 value) internal {
+	function set(Map storage map, address key, uint16 value) internal {
 		uint256 index = map.index[key];
 		if (index == 0) {
 			// create new entry
@@ -94,7 +94,7 @@ library EnumerableMap {
 		delete map.index[key];
 
 		require(map.index[key] == 0, "Removed key still exists in the index.");
-		require(map.entries[index].key != key, "Removed key still exists in the array at original index.");
+		require(index == lastIndex || map.entries[index].key != key, "Removed key still exists in the array at original index.");
 	}
 
 	function get(Map storage map, address key) internal view returns (uint16) {
@@ -175,7 +175,7 @@ contract RecoverableWallet is Erc777TokensRecipient {
 	/// @param _recoveryDelayInDays the number of days delay between when `_newRecoveryAddress` can initiate a recovery and when it can complete the recovery
 	function addRecoveryAddress(address _newRecoveryAddress, uint16 _recoveryDelayInDays) external onlyOwner onlyOutsideRecovery {
 		require(_newRecoveryAddress != address(0), "Recovery address must be supplied.");
-		recoveryDelaysInDays.addOrUpdate(_newRecoveryAddress, _recoveryDelayInDays);
+		recoveryDelaysInDays.set(_newRecoveryAddress, _recoveryDelayInDays);
 		emit RecoveryAddressAdded(_newRecoveryAddress, _recoveryDelayInDays);
 	}
 

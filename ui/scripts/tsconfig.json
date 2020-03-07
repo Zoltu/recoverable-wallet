@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"noEmit": true,
+
+		"target": "ESNext",
+		"moduleResolution": "node",
+		"sourceMap": true,
+		"inlineSources": true,
+		"declaration": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+	}
+}

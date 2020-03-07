@@ -12,13 +12,13 @@
 		"@zoltu/ethereum-abi-encoder": "4.0.0"
 	},
 	"devDependencies": {
-		"@types/node": "12.12.14",
+		"@types/node": "13.9.0",
 		"@zoltu/bigint-helpers": "2.0.1",
 		"@zoltu/ethereum-crypto": "2.1.1",
 		"@zoltu/solidity-typescript-generator": "3.1.0",
 		"solc": "0.6.2",
-		"ts-node": "8.5.4",
-		"typescript": "3.7.3"
+		"ts-node": "8.6.2",
+		"typescript": "3.8.3"
 	},
 	"files": [
 		"/output/",

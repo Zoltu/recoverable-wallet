@@ -27,7 +27,7 @@ async function compileContracts(): Promise<[CompilerInput, CompilerOutput]> {
 			},
 			outputSelection: {
 				"*": {
-					'*': [ 'abi', 'metadata', 'evm.bytecode.object', 'evm.bytecode.sourceMap', 'evm.deployedBytecode.object', 'evm.gasEstimates' ]
+					'*': [ 'abi', 'metadata', 'evm.bytecode.object', 'evm.bytecode.sourceMap', 'evm.deployedBytecode.object', 'evm.gasEstimates', 'evm.methodIdentifiers' ]
 				}
 			}
 		},

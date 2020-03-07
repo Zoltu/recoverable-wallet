@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"module": "ES2015",
+		"rootDir": "app/ts",
+		"outDir": "app/js",
+		"lib": ["DOM", "ES2020"],
+		"noEmit": false,
+		// remove when https://github.com/facebook/react/issues/17352 is fixed
+		"allowUmdGlobalAccess": true,
+		"jsx": "react",
+		"plugins": [ { "transform": "@zoltu/typescript-transformer-append-js-extension/output/index.js", "after": true, } ],
+
+		"target": "ESNext",
+		"moduleResolution": "node",
+		"sourceMap": true,
+		"inlineSources": true,
+		"declaration": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+	},
+	"include": [
+		"app/ts/**/*.ts",
+		"app/ts/**/*.tsx",
+	]
+}

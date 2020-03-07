@@ -16,6 +16,42 @@
 				"--renew-anon-volumes"
 			],
 			"problemMatcher": []
+		},
+		{
+			"label": "ui - watch",
+			"type": "npm",
+			"path": "/ui/package.json",
+			"script": "watch",
+			"group": "none",
+			"problemMatcher": [ "$tsc-watch" ],
+			"isBackground": true,
+		},
+		{
+			"label": "ui - serve",
+			"type": "npm",
+			"path": "/ui/package.json",
+			"script": "serve",
+			"group": "none",
+			"dependsOn": "",
+			"problemMatcher": [],
+			"isBackground": true,
+		},
+		{
+			"label": "ui - watch & serve",
+			"dependsOn": [
+				"ui - watch",
+				"ui - serve",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"label": "all the things",
+			"dependsOn": [
+				"docker-compose",
+				"ui - watch",
+				"ui - serve",
+			],
+			"problemMatcher": [],
 		}
 	]
 }

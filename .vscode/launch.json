@@ -29,7 +29,7 @@
 			"name": "toolbox - script",
 			"cwd": "${workspaceFolder}/toolbox/",
 			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/toolbox/source/scripts/send-tokens.ts", ],
+			"args": [ "${workspaceFolder}/toolbox/source/scripts/get-status.ts", ],
 			"env": {
 				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
 			}

@@ -8,7 +8,7 @@ export class MnemonicSigner {
 		public readonly address: bigint,
 	) { }
 
-	public static readonly create = async (words: string[], index?: number) => {
+	public static readonly create = async (words: string[], index: number = 0) => {
 		const seed = await mnemonic.toSeed(words)
 		const privateKey = await hdWallet.privateKeyFromSeed(seed, `m/44'/60'/0'/0/${index}`)
 		const publicKey = await secp256k1.privateKeyToPublicKey(privateKey)

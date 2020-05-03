@@ -1,0 +1,92 @@
+main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.provider-container {
+	display: flex;
+	flex-direction: column;
+	align-items: left;
+}
+
+.provider-container article {
+	border-width: 1px;
+	border-style: dotted;
+	border-color: grey;
+	padding: 5px;
+	margin: 5px;
+}
+
+.send-token-form {
+	display: flex;
+	flex-direction: row;
+}
+
+.send-token-form>* {
+	margin: 5px;
+}
+
+.asset-manager.send-token-button-slot {
+	width: 51px;
+	display: flex;
+	justify-content: center;
+}
+
+.monospace {
+	font-family: monospace;
+}
+
+
+/* Number inputs shouldn't have range spinners on them */
+input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+input[type=number] {
+	-moz-appearance: textfield;
+}
+
+
+/* Spinner */
+
+.spinner {
+	display: inline-block;
+	position: relative;
+	width: 20px;
+}
+
+.spinner div {
+	display: inline-block;
+	position: absolute;
+	left: calc(1em / 8.5);
+	width: calc(1em / 4);
+	background: #000000;
+	animation: spinner 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+
+.spinner div:nth-child(1) {
+	left: calc(1em / 8.5);
+	animation-delay: -0.24s;
+}
+
+.spinner div:nth-child(2) {
+	left: calc(1em / 2);
+	animation-delay: -0.12s;
+}
+
+.spinner div:nth-child(3) {
+	left: calc(1em / 1.1);
+	animation-delay: 0;
+}
+
+@keyframes spinner {
+	0% {
+		top: calc(1em / 8.5);
+		height: 1em;
+	}
+	50%, 100% {
+		top: calc(1em / 2.7);
+		height: calc(1em / 2);
+	}
+}

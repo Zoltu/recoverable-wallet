@@ -12,9 +12,10 @@ export class FriendlyRecoverableWallet {
 		private readonly wallet: RecoverableWallet
 	) { }
 
-	public static readonly create = (rpc: JsonRpc, address: bigint): FriendlyRecoverableWallet => {
+	public static readonly create = async (rpc: JsonRpc, address: bigint): Promise<FriendlyRecoverableWallet> => {
 		const dependencies = new DependenciesImpl(rpc)
 		const recoverableWallet = new RecoverableWallet(dependencies, address)
+		dependencies.callFrom = await recoverableWallet.owner_()
 		return new FriendlyRecoverableWallet(rpc, recoverableWallet)
 	}
 
@@ -33,6 +34,8 @@ export class FriendlyRecoverableWallet {
 	public readonly getAttoethBalance = async (): Promise<bigint> => await this.rpc.getBalance(this.wallet.address)
 
 	public readonly getEthBalance = async (): Promise<number> => toEth(await this.getAttoethBalance())
+
+	public readonly getIndivisibletokenBalance = async (tokenAddress: bigint): Promise<bigint> => Bytes.fromByteArray(await this.callContractLocal(tokenAddress, 0n, 'balanceOf(address)', this.getAddress())).toUnsignedBigint()
 
 	public readonly listRecoverers = async (): Promise<{address: bigint, delay: bigint}[]> => {
 		const results = await this.wallet.listRecoverers_()
@@ -95,6 +98,11 @@ export class FriendlyRecoverableWallet {
 		if (recoveryFinishedEvent === undefined) throw new Error(`Expected RecoveryFinished event.`)
 		if (recoveryFinishedEvent.parameters.newOwner !== await this.wallet.owner_()) throw new Error(`RecoveryFinished event reports new owner is ${await addressToChecksummedString(recoveryFinishedEvent.parameters.newOwner)} which differs from actual current owner ${await addressToChecksummedString(await this.wallet.owner_())}.`)
 		return recoveryFinishedEvent.parameters.newOwner
+	}
+
+	public readonly callContractLocal = async (contractAddress: bigint, value: bigint, methodSignature: string, ...parameters: EncodableArray): Promise<Uint8Array> => {
+		const data = await encodeMethod(keccak256.hash, methodSignature, parameters)
+		return await this.wallet.execute_(contractAddress, value, data)
 	}
 
 	public readonly callContract = async (contractAddress: bigint, value: bigint, methodSignature: string, ...parameters: EncodableArray): Promise<readonly Event[]> => {

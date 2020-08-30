@@ -5,8 +5,8 @@ const amountInEth = 1
 
 async function main() {
 	const wallet = await getWallet()
-	console.log(await wallet.getSignerString())
 	await wallet.sendEther(destination, amountInEth)
+	console.log('Sent!')
 }
 
 if (require.main === module) {

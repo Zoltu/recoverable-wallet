@@ -1,6 +1,6 @@
 import 'regenerator-runtime'
 import Transport from "@ledgerhq/hw-transport";
-import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
+import TransportNodeHid from '@ledgerhq/hw-transport-node-hid-singleton'
 import AppEth from '@ledgerhq/hw-app-eth'
 import { Bytes } from '@zoltu/ethereum-types'
 

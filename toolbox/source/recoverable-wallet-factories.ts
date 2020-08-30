@@ -4,7 +4,7 @@ import { FriendlyRecoverableWallet } from './friendly-recoverable-wallet'
 import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc'
 
 async function getRecoverableWallet(rpc: SignerFetchRpc, walletAddress: bigint) {
-	return FriendlyRecoverableWallet.create(rpc, walletAddress)
+	return await FriendlyRecoverableWallet.create(rpc, walletAddress)
 }
 
 export async function getLedgerRecoverableWallet(jsonRpcHttpEndpoint: string, gasPrice: bigint, walletAddress: bigint, derivationPath?: string) {
@@ -24,7 +24,7 @@ export async function getMemoryRecoverableWallet(jsonRpcHttpEndpoint: string, ga
 
 export async function getViewingRecoverableWallet(jsonRpcHttpEndpoint: string, walletAddress: bigint) {
 	const rpc = new FetchJsonRpc(jsonRpcHttpEndpoint, fetch, {})
-	const wallet = FriendlyRecoverableWallet.create(rpc, walletAddress)
+	const wallet = await FriendlyRecoverableWallet.create(rpc, walletAddress)
 	console.log(`Wallet: ${await wallet.getAddressString()}`)
 	return wallet
 }

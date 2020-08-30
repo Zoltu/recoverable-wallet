@@ -12,7 +12,7 @@ if (require.main === module) {
 		.then(webcrypto => (globalThis as any).crypto = new webcrypto.Crypto())
 		.then(main)
 		.catch(error => {
-			console.error(error)
+			console.dir(error, { colors: true, depth: null })
 			process.exit(1)
 		})
 }

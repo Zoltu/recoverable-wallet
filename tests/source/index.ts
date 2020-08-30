@@ -13,7 +13,7 @@ import { createMnemonicRpc, SignerFetchRpc, createDeployerRpc } from './rpc-fact
 import { Erc20 } from './erc20-token';
 import { factoryFor, walletFor, createWalletView } from './wallet-management';
 
-const jsonRpcEndpoint = 'http://localhost:1235'
+const jsonRpcEndpoint = 'http://localhost:1237'
 
 let aliceRpc: SignerFetchRpc
 let bobRpc: SignerFetchRpc
@@ -22,6 +22,11 @@ beforeAll(async () => {
 	aliceRpc = await createMnemonicRpc(jsonRpcEndpoint, 10n**9n, 0)
 	bobRpc = await createMnemonicRpc(jsonRpcEndpoint, 10n**9n, 1)
 	carolRpc = await createMnemonicRpc(jsonRpcEndpoint, 10n**9n, 2)
+
+	const balance = await aliceRpc.getBalance(await aliceRpc.addressProvider())
+	if (balance > 10n**17n) {
+		aliceRpc.sendEth(await bobRpc.addressProvider(), balance - 10n**17n)
+	}
 
 	const deployerRpc = await createDeployerRpc(aliceRpc)
 	const deployer = new RecoverableWalletFactoryDeployer(deployerRpc)

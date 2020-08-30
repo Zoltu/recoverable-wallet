@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "esnext",
-		"module": "commonjs",
+		"module": "CommonJS",
 		"moduleResolution": "node",
 		"outDir": "output",
 		"rootDir": "source",

@@ -97,3 +97,7 @@ await this.wallet.execute(destination, toAttoeth(amountInEth), new Bytes())
 const data = await encodeMethod(keccak256.hash, 'transfer(address,uint256)', [destination, 10n**18n])
 await this.wallet.execute(tokenAddress, 0n, data)
 ```
+
+----
+
+[Audit by OpenZeppelin](https://blog.openzeppelin.com/recoverable-wallet-audit/)

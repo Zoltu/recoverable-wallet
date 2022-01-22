@@ -9,7 +9,7 @@
 		"@zoltu/ethereum-types": "8.3.2",
 		"@zoltu/ethereum-fetch-json-rpc": "11.1.0",
 		"@zoltu/recoverable-wallet-library": "file:../contracts",
-		"node-fetch": "2.6.1",
+		"node-fetch": "3.1.1",
 		"jasmine": "3.5.0",
 		"ts-node": "8.6.2",
 		"typescript": "3.8.3"

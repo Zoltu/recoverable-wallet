@@ -20,7 +20,7 @@
 		"@zoltu/rlp-encoder": "2.0.0",
 		"@zoltu/solidity-typescript-generator": "4.0.3",
 		"eth-ens-namehash": "2.0.8",
-		"node-fetch": "2.6.1",
+		"node-fetch": "2.6.7",
 		"regenerator-runtime": "0.13.3",
 		"semaphore-async-await": "1.5.1",
 		"ts-node": "8.10.2",

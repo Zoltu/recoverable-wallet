@@ -13,6 +13,26 @@ export function attoString(value: bigint): string {
 	}
 }
 
+export function nanoString(value: bigint): string {
+	const integerPart = value / 10n**9n
+	const fractionalPart = value % 10n**9n
+	if (fractionalPart === 0n) {
+		return integerPart.toString(10)
+	} else {
+		return `${integerPart.toString(10)}.${fractionalPart.toString(10).padStart(9, '0')}`
+	}
+}
+
+export function usdcString(value: bigint): string {
+	const integerPart = value / 10n**6n
+	const fractionalPart = value % 10n**6n
+	if (fractionalPart === 0n) {
+		return integerPart.toString(10)
+	} else {
+		return `${integerPart.toString(10)}.${fractionalPart.toString(10).padStart(6, '0')}`
+	}
+}
+
 export async function awaitUserInput() {
 	const process = await import('process')
 	process.stdin.setRawMode(true)

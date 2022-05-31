@@ -33,7 +33,7 @@ export async function getMemoryWallet() {
 }
 
 export async function getWallet() {
-	const wallet = await getMemoryWallet()
+	const wallet = await getLedgerWallet()
 	console.log(`\x1b[32mWallet\x1b[0m: \x1b[35mSigner\x1b[0m: ${await wallet.getSignerString()}; \x1b[35mAddress\x1b[0m: ${await wallet.getAddressString()}`)
 	return wallet
 }

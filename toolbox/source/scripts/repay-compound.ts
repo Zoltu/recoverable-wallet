@@ -14,6 +14,7 @@ async function main() {
 	console.log(`Repaying all debt up to ${attoString(amountToRepayPlusPadding)} ETH on behalf of 0x${await addressToChecksummedString(borrower)}...`)
 	await wallet.callContract(cEtherRepayHelper, amountToRepayPlusPadding, 'repayBehalfExplicit(address borrower, address cEther)', borrower, cEther)
 	console.log(`🎉`)
+	process.exit(0)
 }
 
 if (require.main === module) {

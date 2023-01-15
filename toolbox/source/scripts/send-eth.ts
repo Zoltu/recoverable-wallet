@@ -13,7 +13,7 @@ async function main() {
 	await awaitUserInput()
 	await wallet.sendEther(destination, amountInEth)
 	console.log('Sent!')
-	process.exit(1)
+	process.exit(0)
 }
 
 if (require.main === module) {

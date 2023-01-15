@@ -1,9 +1,9 @@
 import { addressToChecksummedString } from '@zoltu/ethereum-crypto/output-node/ethereum'
 import { attoString } from '../utils'
-import { getMnemonicWallet } from './_globals'
+import { getWallet } from './_globals'
 
 async function main() {
-	const wallet = await getMnemonicWallet()
+	const wallet = await getWallet()
 
 	console.log(`\x1b[32mWallet\x1b[0m: ${await wallet.getAddressString()}`)
 	console.log(`\x1b[32mOwner\x1b[0m: ${await wallet.getOwnerString()}`)

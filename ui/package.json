@@ -1,26 +1,19 @@
 {
+	"private": true,
+	"description": "",
+	"repository": {},
+	"license": "Unlicense",
 	"devDependencies": {
-		"@types/react": "16.9.23",
-		"@types/react-dom": "16.9.5",
-		"@zoltu/typescript-transformer-append-js-extension": "1.0.1",
-		"ts-node": "8.6.2",
-		"ttypescript": "1.5.10",
-		"typescript": "3.8.3"
+		"typescript": "4.9.4"
 	},
 	"dependencies": {
-		"@zoltu/ethereum-abi-encoder": "4.0.0",
-		"@zoltu/ethereum-crypto": "2.1.1",
-		"@zoltu/ethereum-fetch-json-rpc": "11.1.0",
-		"@zoltu/ethereum-types": "8.3.2",
-		"@zoltu/recoverable-wallet-library": "file:../contracts",
-		"es-module-shims": "0.4.6",
-		"react": "16.13.0",
-		"react-dom": "16.13.0"
+		"@preact/signals": "1.1.3",
+		"micro-eth-signer": "0.5.0",
+		"preact": "10.11.3"
 	},
 	"scripts": {
-		"vendor": "cd scripts && ts-node vendor.ts",
-		"build": "ttsc",
-		"watch": "ttsc --watch",
-		"serve": "npx http-server app"
+		"build": "tsc",
+		"serve": "npx http-server ./app",
+		"vendor": "npm ci --ignore-scripts && cd build && npm ci --ignore-scripts && npm run vendor"
 	}
 }

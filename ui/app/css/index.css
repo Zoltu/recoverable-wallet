@@ -1,92 +1,66 @@
+*,
+*::before,
+*::after { 
+	box-sizing: border-box;
+}
+
 main {
-	display: flex;
+	margin: 10px;
+}
+
+/** Spinner **/
+svg.spinner {
+	animation: 2s linear infinite svg-animation;
+	max-width: 100px;
+}
+@keyframes svg-animation {
+	0% { transform: rotateZ(0deg); }
+	100% { transform: rotateZ(360deg) }
+}
+svg.spinner > circle {
+	animation: 1.4s ease-in-out infinite both circle-animation;
+	display: block;
+	fill: transparent;
+	stroke: #2f3d4c;
+	stroke-linecap: round;
+	stroke-dasharray: 283;
+	stroke-dashoffset: 280;
+	stroke-width: 10px;
+	transform-origin: 50% 50%;
+}
+@keyframes circle-animation {
+	0%,
+	25% { stroke-dashoffset: 280; transform: rotate(0); }
+	50%,
+	75% { stroke-dashoffset: 75; transform: rotate(45deg); }
+	100% { stroke-dashoffset: 280; transform: rotate(360deg); }
+}
+
+.input-sizer {
+	display: inline-flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.provider-container {
-	display: flex;
-	flex-direction: column;
-	align-items: left;
-}
-
-.provider-container article {
-	border-width: 1px;
-	border-style: dotted;
-	border-color: grey;
-	padding: 5px;
-	margin: 5px;
-}
-
-.send-token-form {
-	display: flex;
-	flex-direction: row;
-}
-
-.send-token-form>* {
-	margin: 5px;
-}
-
-.asset-manager.send-token-button-slot {
-	width: 51px;
-	display: flex;
 	justify-content: center;
-}
-
-.monospace {
-	font-family: monospace;
-}
-
-
-/* Number inputs shouldn't have range spinners on them */
-input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button {
-	-webkit-appearance: none;
-	margin: 0;
-}
-input[type=number] {
-	-moz-appearance: textfield;
-}
-
-
-/* Spinner */
-
-.spinner {
-	display: inline-block;
 	position: relative;
-	width: 20px;
+	font: inherit;
 }
-
-.spinner div {
-	display: inline-block;
-	position: absolute;
-	left: calc(1em / 8.5);
-	width: calc(1em / 4);
-	background: #000000;
-	animation: spinner 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+.input-sizer::after,
+.input-sizer input {
+	width: 100%;
+	min-width: 0;
+	font: inherit;
+	padding: 0px;
+	margin: 0;
+	resize: none;
+	background: none;
+	border: none;
 }
-
-.spinner div:nth-child(1) {
-	left: calc(1em / 8.5);
-	animation-delay: -0.24s;
+.input-sizer::after {
+	content: attr(data-value);
+	visibility: hidden;
+	white-space: pre-wrap;
+	height: 0;
 }
-
-.spinner div:nth-child(2) {
-	left: calc(1em / 2);
-	animation-delay: -0.12s;
-}
-
-.spinner div:nth-child(3) {
-	left: calc(1em / 1.1);
-	animation-delay: 0;
-}
-
-@keyframes spinner {
-	0% {
-		top: calc(1em / 8.5);
-		height: 1em;
-	}
-	50%, 100% {
-		top: calc(1em / 2.7);
-		height: calc(1em / 2);
-	}
+.input-sizer input:invalid {
+	background-color: lightpink;
 }

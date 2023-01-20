@@ -1,28 +1,25 @@
 {
 	"compilerOptions": {
-		"module": "ES2015",
+		"target": "ES2021",
+		"module": "ES2020",
+		"moduleResolution": "node",
 		"rootDir": "app/ts",
 		"outDir": "app/js",
-		"lib": ["DOM", "ES2020"],
-		"noEmit": false,
-		// remove when https://github.com/facebook/react/issues/17352 is fixed
-		"allowUmdGlobalAccess": true,
-		"jsx": "react",
-		"plugins": [ { "transform": "@zoltu/typescript-transformer-append-js-extension/output/index.js", "after": true, } ],
-
-		"target": "ESNext",
-		"moduleResolution": "node",
 		"sourceMap": true,
 		"inlineSources": true,
 		"declaration": true,
+		"declarationMap": true,
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
-		"noFallthroughCasesInSwitch": true,
+		"noImplicitThis": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+		"lib": ["ES2021", "DOM"],
 	},
 	"include": [
-		"app/ts/**/*.ts",
-		"app/ts/**/*.tsx",
-	]
+		"./app/ts/**/*.ts",
+		"./app/ts/**/*.tsx",
+	],
 }

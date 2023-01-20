@@ -1,6 +1,0 @@
-{
-	"devDependencies": {
-		"@types/node": "13.9.0",
-		"@zoltu/file-copier": "2.2.1"
-	}
-}

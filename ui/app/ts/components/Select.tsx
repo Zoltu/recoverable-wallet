@@ -1,5 +1,5 @@
-import { Signal } from "@preact/signals";
-import { JSX } from "preact/jsx-runtime";
+import { Signal } from '@preact/signals'
+import { JSX } from 'preact/jsx-runtime'
 
 export interface SelectModel<T extends string> {
 	readonly options: readonly T[]

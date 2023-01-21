@@ -1,8 +1,7 @@
-import { batch, Signal, useSignal, useSignalEffect } from "@preact/signals"
-import { useReducer } from "preact/hooks"
-import { JSX } from "preact/jsx-runtime"
-import { bigintToDecimalString, decimalStringToBigint } from "../library/utilities.js"
-import { AutosizingInput } from "./AutosizingInput.js"
+import { batch, Signal, useSignal, useSignalEffect } from '@preact/signals'
+import { JSX } from 'preact/jsx-runtime'
+import { bigintToDecimalString, decimalStringToBigint } from '../library/utilities.js'
+import { AutosizingInput } from './AutosizingInput.js'
 
 const sanitizationRegexp = /[^\d\.]/g
 const regexp = /^\d*\.?(?:\d+)?$/
@@ -16,10 +15,9 @@ export interface FixedPointInput {
 	type?: string | JSX.SignalLike<string>
 	placeholder?: string | JSX.SignalLike<string>
 	required?: boolean | JSX.SignalLike<boolean>
-	onChange?: () => void
+	onChange?: (newValue: bigint) => void
 }
 export function FixedPointInput(model: FixedPointInput) {
-	const [, forceUpdate] = useReducer<number, undefined>(x => x + 1, 0)
 	const internalValue = useSignal('')
 	useSignalEffect(() => {
 		// don't set internalValue if its contents already equal the value (e.g., '1.' === 1 === '1.0' or '' === '0' === '0.' === '.' === '.0')
@@ -28,36 +26,37 @@ export function FixedPointInput(model: FixedPointInput) {
 	})
 	useSignalEffect(() => { model.value.value = decimalStringToBigint(internalValue.value, model.decimals.value) })
 	function onInput(event: JSX.TargetedEvent<HTMLInputElement, Event>) {
-		const newValue = event.currentTarget.value
-		if (newValue === internalValue.value) return
-		if (newValue === '') {
+		const nativeValue = event.currentTarget.value
+		if (nativeValue === internalValue.value) return
+		const sanitized = nativeValue.replaceAll(sanitizationRegexp, '')
+		if (sanitized === '') {
 			batch(() => {
 				model.value.value = 0n
 				internalValue.value = ''
 			})
-		}
-		const sanitized = newValue.replaceAll(sanitizationRegexp, '')
-		if (regexp.test(sanitized)) {
+		} else if (regexp.test(sanitized)) {
 			batch(() => {
 				model.value.value = decimalStringToBigint(sanitized, model.decimals.value)
 				internalValue.value = sanitized
 			})
-	   }
-	   if (newValue !== internalValue.value) {
-		   forceUpdate(undefined)
-	   }
+		}
+		// after sanitization the internal value may differ from the native value so we need to force the native value to match our internal value to the internal value
+		event.currentTarget.value = internalValue.value
+	}
+	function onChange() {
+		model.onChange && model.onChange(model.value.value)
 	}
 
 	const properties = {
-		pattern: regexp.source,
 		value: internalValue,
+		pattern: regexp.source,
 		onInput: onInput,
-		className: model.className,
-		style: model.style,
-		type: model.type,
-		placeholder: model.placeholder,
-		required: model.required,
-		onChange: model.onChange,
+		onChange: onChange,
+		...model.className ? {className: model.className} : {},
+		...model.style ? {style: model.style} : {},
+		...model.type ? {type: model.type} : {},
+		...model.placeholder ? {placeholder: model.placeholder} : {},
+		...model.required ? {required: model.required} : {},
 	} as const
 	return model.autoSize ? <AutosizingInput {...properties} /> : <input {...properties}/>
 }

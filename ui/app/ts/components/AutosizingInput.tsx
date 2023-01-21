@@ -1,22 +1,25 @@
-import { JSX } from "preact/jsx-runtime"
-import { useSignal, useSignalEffect } from "@preact/signals"
+import { JSX } from 'preact/jsx-runtime'
+import { useSignal, useSignalEffect } from '@preact/signals'
+import { Shadow } from '../library/Shadow.js'
 
-export interface InputModel extends Pick<JSX.HTMLAttributes<HTMLSpanElement>, 'className' | 'style'>, Pick<JSX.HTMLAttributes<HTMLInputElement>, 'type' | 'pattern' | 'placeholder' | 'required' | 'value'> {
+export interface AutosizingInputModel extends Pick<JSX.HTMLAttributes<HTMLSpanElement>, 'className' | 'style'>, Pick<JSX.HTMLAttributes<HTMLInputElement>, 'type' | 'pattern' | 'placeholder' | 'required' | 'value' | 'onInput' | 'onChange'> {
 	readonly value: JSX.SignalLike<string>
-	readonly onInput?: (event: JSX.TargetedEvent<HTMLInputElement, Event>) => void
-	readonly onChange?: (event: JSX.TargetedEvent<HTMLInputElement, Event>) => void
 }
-export function AutosizingInput(model: InputModel) {
+export function AutosizingInput(model: AutosizingInputModel) {
 	const value = useSignal('')
 	const onInput = (event: JSX.TargetedEvent<HTMLInputElement, Event>) => {
 		value.value = event.currentTarget.value
-		model.onInput && model.onInput(event)
+		// https://github.com/preactjs/preact/pull/3867
+		model.onInput && (model as { onInput: (event: JSX.TargetedEvent<HTMLInputElement, Event>) => void }).onInput(event)
 	}
 	useSignalEffect(function() { value.value = model.value.value })
 
-	return <span className={model.className} style={model.style}>
-		<label data-value={value} className='input-sizer'>
-			<input type={model.type} pattern={model.pattern} required={model.required} placeholder={model.placeholder} value={model.value} onInput={onInput} onChange={model.onChange} size={1}/>
-		</label>
-	</span>
+	return <Shadow>
+		<span className={model.className} style={model.style}>
+			<link rel='stylesheet' href='css/autosizing-input.css'/>
+			<label data-value={value}>
+				<input type={model.type} pattern={model.pattern} required={model.required} placeholder={model.placeholder} value={model.value} onChange={model.onChange} onInput={onInput} size={1}/>
+			</label>
+		</span>
+	</Shadow>
 }

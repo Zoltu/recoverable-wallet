@@ -35,32 +35,3 @@ svg.spinner > circle {
 	75% { stroke-dashoffset: 75; transform: rotate(45deg); }
 	100% { stroke-dashoffset: 280; transform: rotate(360deg); }
 }
-
-.input-sizer {
-	display: inline-flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-	font: inherit;
-}
-.input-sizer::after,
-.input-sizer input {
-	width: 100%;
-	min-width: 0;
-	font: inherit;
-	padding: 0px;
-	margin: 0;
-	resize: none;
-	background: none;
-	border: none;
-}
-.input-sizer::after {
-	content: attr(data-value);
-	visibility: hidden;
-	white-space: pre-wrap;
-	height: 0;
-}
-.input-sizer input:invalid {
-	background-color: lightpink;
-}

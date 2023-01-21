@@ -50,8 +50,8 @@ export function UniswapAndSend(model: UniswapAndSendModel) {
 		})
 	}
 
-	const SourceToken = (sourceAmountResult.state === 'pending') ? <Spinner/> : <TokenAndAmount key='source' token={sourceToken} amount={sourceAmount} onChange={sourceChanged}/>
-	const TargetToken = (targetAmountResult.state === 'pending') ? <Spinner/> : <TokenAndAmount key='target' token={targetToken} amount={targetAmount} onChange={targetChanged}/>
+	const SourceToken = (sourceAmountResult.state === 'pending') ? <Spinner/> : <TokenAndAmount key='source' token={sourceToken} amount={sourceAmount} onAmountChange={sourceChanged}/>
+	const TargetToken = (targetAmountResult.state === 'pending') ? <Spinner/> : <TokenAndAmount key='target' token={targetToken} amount={targetAmount} onAmountChange={targetChanged}/>
 
 	return <div>
 		Send {SourceToken} to <AddressPicker address={recipient}/> as {TargetToken} <button onClick={onSend}>Send</button>

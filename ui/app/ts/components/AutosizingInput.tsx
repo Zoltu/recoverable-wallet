@@ -15,8 +15,8 @@ export function AutosizingInput(model: AutosizingInputModel) {
 	useSignalEffect(function() { value.value = model.value.value })
 
 	return <Shadow>
+		<link rel='stylesheet' href='css/autosizing-input.css'/>
 		<span className={model.className} style={model.style}>
-			<link rel='stylesheet' href='css/autosizing-input.css'/>
 			<label data-value={value}>
 				<input type={model.type} pattern={model.pattern} required={model.required} placeholder={model.placeholder} value={model.value} onChange={model.onChange} onInput={onInput} size={1}/>
 			</label>

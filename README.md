@@ -1,5 +1,8 @@
 # Recoverable Wallet
 
+## Deprecated
+This project has been deprecated in favor of Gnosis SAFE which now supports time delayed recovery.
+
 ## What
 
 This is an Ethereum wallet contract that allows you to set recovery addresses, each with a separate recovery delay.  If a recovery address initiates a recovery, then they have to wait for the delay before they can takeover the account.  At any point during that interval the owner can cancel the recovery process and (optionally) revoke the recovery rights of the address that initiated the recovery.
